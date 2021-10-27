@@ -2,6 +2,7 @@
     "name": "baldahint",
     "version": "1.0.0",
     "description": "A tool that helps you become the best BALDA player you always wanted to be",
+    "type": "module",
     "main": "app.js",
     "license": "WTFPL",
     "dependencies": {

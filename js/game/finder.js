@@ -69,12 +69,49 @@ class Step {
     }
 }
 
+class Solution {
+    constructor() {
+        this.field = new Field()
+        this.words = []
+        this.nextBestWordLength = 0
+    }
+
+    addWord(word) {
+        let i = 0
+        for (; i < this.words.length; ++i) {
+            const w = this.words[i]
+            if (word == w)
+                return
+            else if (word.length >= w.length)
+                break
+        }
+        this.words.splice(i, 0, word)
+    }
+
+    bestWord() {
+        return this.words.length ? this.words[0] : ""
+    }
+
+    compare(other) {
+        if (this.bestWord().length > other.bestWord().length)
+            return -1
+        return other.words.length - this.words.length
+    }
+
+    toString() {
+        let buffer = ""
+        buffer += this.field.toString()
+        this.words.forEach(word => buffer += `${word} ${word.length}\n`)
+        return buffer
+    }
+} 
+
 class Finder {
     constructor(game, dictionary, index) {
         this.game = game
         this.dictionary = dictionary
         this.dictionaryIndex = index
-        this.solutions = {}
+        this.solutions = []
     }
 
     maxWordLength() {
@@ -182,12 +219,8 @@ class Finder {
     nextPostfix(step) {
         log(`Trying word: ${step.currentWord()}`)
 
-        if (this.dictionaryIndex.indexOf(step.currentLetters) !== -1)
-        {
-            const word = step.currentWord()
-            if (!this.game.usedWords.hasOwnProperty(word))
-                this.solutions[word] = true
-        }
+        if (!this.game.isWordUsed(step.currentWord()) && this.dictionaryIndex.indexOf(step.currentLetters) != -1)
+            this.addSoultion(step)
 
         if (step.currentLetters.length + 1 > this.maxWordLength())
             return
@@ -219,6 +252,20 @@ class Finder {
         step.visitMask.set(step.currentCell.x, step.currentCell.y, NotVisited)
     }
 
+    addSoultion(step) {
+        let solution = null
+        let index = this.solutions.findIndex((solution => solution.field.hash() == step.field.hash()))
+        if (index < 0) {
+            solution = new Solution()
+            solution.field.cloneFrom(step.field)
+            this.solutions.push(solution)
+        } else {
+            solution = this.solutions[index]
+        }
+
+        solution.addWord(step.currentWord())
+    }
+
     // longestChainLength() {
     //     let firstNonEmptyCell = null
     //     this.game.field.forEachCell((value, x, y) => { if (!firstNonEmptyCell) firstNonEmptyCell = { x: x, y: y} })
@@ -231,7 +278,7 @@ class Finder {
     // }
 
     generateWords() {
-        this.solutions = {}
+        this.solutions = []
         const firstSteps = this.generatePossibleFirstSteps()
         const prefixChains = this.generatePrefixChains(firstSteps)
         console.log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
@@ -242,8 +289,9 @@ class Finder {
     }
 
     getSolutions() {
-        return Object.getOwnPropertyNames(this.solutions)
+        return this.solutions
     }
 }
 
-module.exports = Finder
+exports.Finder = Finder
+exports.Solution = Solution

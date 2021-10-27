@@ -108,6 +108,10 @@ class Field {
             }
         }
     }
+
+    hash() {
+        return this.toStringArray().join("")
+    }
 }
 
 module.exports = Field

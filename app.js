@@ -5,7 +5,9 @@ const alphabet = require("./js/dictionary/alphabet.js")
 const Dictionary = require("./js/dictionary/parsing.js")
 const DictionaryIndex = require("./js/dictionary/index.js")
 const Game = require("./js/game/game.js")
-const Finder = require("./js/game/finder.js")
+
+const Finder = require("./js/game/finder.js").Finder
+const Solution = require("./js/game/finder.js").Solution
 
 const dictionary = new Dictionary(alphabet.Russian)
 
@@ -56,12 +58,32 @@ async function startGame() {
     else
     {
         console.log(`${solutions.length} soultions found.`)
-        solutions.sort(utils.longStringsFirstComparator)
-        const longestSolutionLength = solutions[0].length
-        const minShownSolutions = 20
-        const bestSolutions = solutions.filter((word, index) => index < minShownSolutions || word.length > longestSolutionLength - 2)
-        console.log(`${bestSolutions.length}/${solutions.length} best soultions shown.`)
-        bestSolutions.forEach((word, index) => console.log(`${index}: ${word}`))
+        solutions.sort((a, b) => a.compare(b))
+
+        const longestSolutionLength = solutions[0].bestWord().length
+        const minShownSolutions = 5
+        const maxShownSolutions = 10
+        // const bestSolutions = solutions.filter((solution, index) =>
+        //     (index < minShownSolutions || solution.bestWord().length > longestSolutionLength - 2) && index < maxShownSolutions
+        // )
+        // console.log(`${bestSolutions.length}/${solutions.length} best soultions shown.`)
+        // bestSolutions.forEach((solution, index) => console.log(`----${index}-----\n${solution.toString()}`))
+
+        const bestWords0 = solutions.reduce(
+            (acc, s) => {
+                s.words.forEach(word => {
+                    acc[word] = true
+                })
+                return acc
+            },
+            new Object()
+        )
+        console.log("Best words:")
+        const bestWords = Object.getOwnPropertyNames(bestWords0)
+            .sort(utils.longStringsFirstComparator)
+            .filter((_, index) => index < maxShownSolutions)
+        
+        bestWords.forEach((word, index) => console.log(`${index}: ${word} ${word.length}`))
 
         const readline = require('readline').createInterface({
             input: process.stdin,
@@ -70,10 +92,10 @@ async function startGame() {
 
         readline.question(`Pick a word...`, indexStr => {
             const index = Number.parseInt(indexStr)
-            console.log(`index=${index}`)
-            if (index >= 0 && index < bestSolutions.length)
+            console.log(`index=${index} ${bestWords.length}`)
+            if (index >= 0 && index < bestWords.length)
             {   
-                const word = bestSolutions[index]
+                const word = bestWords[index]
                 console.log(`Picked ${word}!`)
                 game.addUsedWord(word)   
             }

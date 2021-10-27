@@ -1,6 +1,5 @@
 "use strict"
 
-const { throws } = require('assert')
 const fs = require('fs/promises')
 
 const utils = require("../utils.js")
@@ -34,6 +33,10 @@ class Game {
 
     addUsedWord(word) {
         this.usedWords[word] = true
+    }
+
+    isWordUsed(word) {
+        return this.usedWords.hasOwnProperty(word)
     }
 
     reset() {
