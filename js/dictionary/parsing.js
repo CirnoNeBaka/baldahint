@@ -1,11 +1,12 @@
 "use strict"
 
-const fsRegular = require('fs')
-const fs = require('fs/promises')
-const readline = require('readline')
+import * as fsRegular from 'fs'
+import * as fs from 'fs/promises'
+import * as readline from 'readline'
 
-const utils = require("../utils.js")
-const alphabet = require("./alphabet.js")
+import * as utils from '../utils.js'
+import * as serverUtils from '../server/utils.js'
+import * as alphabet from './alphabet.js'
 
 async function forEachFileLine(inputPath, filterFunction, processorFunction) {
     const fileStream = fsRegular.createReadStream(inputPath)
@@ -74,7 +75,7 @@ class Dictionary {
     }
 
     validateWord(word) {
-        return utils.lettersOf(word).every(letter => this.alphabet.contains(letter))
+        return this.alphabet.containsWord(word)
     }
 
     async save(filePath) {
@@ -89,23 +90,16 @@ class Dictionary {
     async load(filePath) {
         this.parsingLog = []
         this.words = []
-        const lines = await utils.loadStrings(filePath)
+        const lines = await serverUtils.loadStrings(filePath)
         lines.filter(line => {
                 const valid = this.validateWord(line)
                 if (!valid) this.parsingLog.push(`Invalid word skipped: ${line}`)
                 return valid
             })
             .forEach(line => this.addWord(line))
-        // await forEachFileLine(
-        //     filePath,
-        //     line => {
-        //         const valid = this.validateWord(line)
-        //         if (!valid) this.parsingLog.push(`Invalid word skipped: ${line}`)
-        //         return valid
-        //     },
-        //     line => this.addWord(line)
-        // )
     }
 }
 
-module.exports = Dictionary
+export {
+    Dictionary
+}

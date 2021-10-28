@@ -1,0 +1,68 @@
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>baldahint</h1>
+    <div class="mainContainer" id="mainContainer">
+        <div class="field" id="gameField">
+            <table class="fieldTable">
+                <tr v-for="i in game.field.size">
+                    <td v-for="j in game.field.size">
+                        <div
+                            class="fieldCell"
+                            v-bind:isSelected="isSelectedCell(i-1, j-1)"
+                            v-on:click="selectCell(i-1, j-1)"
+                        >
+                            {{ getCellValue(i-1, j-1) }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="usedWords">
+            <p>Used words:</p>
+            <div id="usedWordsList" class="wordList">
+                <div
+                    class="wordListItem"
+                    v-for="i in usedWordsList.length"
+                    @mouseover="hoveredIndexUsed = i"
+                    @mouseleave="hoveredIndexUsed = -1"
+                >
+                    {{ usedWordsList[i-1] }}
+                    <button
+                        class="wordListItemButton"
+                        v-show="hoveredIndexUsed == i"
+                        v-on:click="addToWhitelist(usedWordsList[i-1])"
+                    >W</button>
+                </div>
+            </div>
+            <button v-on:click="addUsedWord">Add word</button>
+        </div>
+        <div id="solutionWords">
+            <p>Solutions:</p>
+            <div id="solutionWordsList" class="wordList">
+                <div
+                    class="wordListItem"
+                    v-for="i in solutionWords.length"
+                    @mouseover="hoveredIndexSolutions = i"
+                    @mouseleave="hoveredIndexSolutions = -1"
+                >
+                    {{ `${solutionWords[i-1]} ${solutionWords[i-1].length}` }}
+                    <button class="wordListItemButton" v-show="hoveredIndexSolutions == i">V</button>
+                    <button
+                        class="wordListItemButton"
+                        v-show="hoveredIndexSolutions == i"
+                        v-on:click="addToBlacklist(solutionWords[i-1])"
+                    >B</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a id="license" href="http://www.wtfpl.net/">
+        <img src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-4.png" width="80" height="15" alt="WTFPL" />
+    </a>
+    <script src="js/client/client.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+</body>

@@ -1,0 +1,109 @@
+body {
+    background: #161616
+}
+
+h1, p, b, div, td, th {
+    color: white;
+    font-family: 'Courier New';
+}
+
+button {
+    color: white;
+    background-color: transparent;
+    border: 2px solid #aaaaaa;
+    border-radius: 8px;
+    padding: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 18px;
+}
+
+button:hover {
+    background-color: #444444;
+}
+
+.mainContainer {
+    display: grid;
+    grid-gap: 10px;
+}
+
+#gameField {
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    margin-top: 50px;
+}
+
+#usedWords {
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+#solutionWords {
+    grid-row-start: 2;
+    grid-row-end: 3;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.fieldTable {
+    border-spacing: 0px;
+    border: 1px solid #aaaaaa;
+}
+
+.fieldCell {
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    border: 1px solid #aaaaaa;
+    background-color: transparent;
+    font-family: 'Arial';
+    font-style: bold;
+    font-size: 30px;
+    margin: 0px;
+}
+
+.fieldCell:hover {
+    background-color: #666666;
+}
+
+.fieldCell[isSelected=true] {
+    background-color: #444444;
+}
+
+.wordList
+{
+    height: 275px;
+    width: 275px;
+    overflow: auto;
+    border: 2px solid #aaaaaa;
+    border-radius: 8px;
+}
+
+.wordListItem {
+    height: 30px;
+    margin: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 20px;
+    background-color: transparent;
+}
+
+.wordListItem:hover {
+    background-color: #444444;
+}
+
+.wordListItemButton {
+    width: 24px;
+    height: 24px;
+    float: right;
+    padding: 0px;
+}
+
+#license {
+    bottom: 0%;
+    position: fixed;
+}

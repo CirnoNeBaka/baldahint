@@ -1,13 +1,12 @@
 "use strict"
 
-const fs = require('fs/promises')
-
-const utils = require("../utils.js")
-const alphabet = require("../dictionary/alphabet.js")
-const Field = require("./field.js")
+import * as utils from '../utils.js'
+import * as alphabet from '../dictionary/alphabet.js'
+import { Field } from './field.js'
 
 class Game {
-    constructor(fieldSize) {
+    constructor(alphabet, fieldSize) {
+        this.alphabet = alphabet
         this.field = new Field()
         this.field.reset(fieldSize)
         this.usedWords = {}
@@ -26,13 +25,22 @@ class Game {
         this.addUsedWord(word)
     }
 
-    addLetter(x, y, letter) {
+    setLetter(x, y, letter) {
         this.field.set(x, y, letter)
-        this.letterCount++
+        this.updateLetterCount()
     }
 
     addUsedWord(word) {
         this.usedWords[word] = true
+    }
+
+    usedWordsList() {
+        return Object.getOwnPropertyNames(this.usedWords).filter(word => this.alphabet.containsWord(word))
+    }
+
+    updateLetterCount() {
+        this.letterCount = 0
+        this.field.forEachCell(value => { if (value != alphabet.EmptySymbol) this.letterCount++ })
     }
 
     isWordUsed(word) {
@@ -45,48 +53,23 @@ class Game {
         this.field.reset(this.field.size)
     }
 
-    async save(filePath) {
-        const file = await fs.open(filePath, 'w')
-        if (!file)
-            throw new Error("Failed to save game to file", filePath)
-
-        const data = {
+    save() {
+        return {
             field: this.field.save(),
-            usedWords: this.usedWords,
-            letterCount: this.letterCount
+            words: Object.getOwnPropertyNames(this.usedWords).filter(prop => prop != "length")
         }
-        await file.write(JSON.stringify(data, null, "\t"))
-        await file.close()
     }
 
-    async load(filePath) {
-        const file = await fs.open(filePath, 'r')
-        if (!file)
-            throw new Error("Failed to load game from file", filePath)
-
-        const json = await file.read()
-        await file.close()
-
-        const data = JSON.parse(json)
-        if (!data.hasOwnProperty("usedWords") || !data.hasOwnProperty("field"))
-            throw new Error("Missing data trying to load game")
-
-        this.usedWords = data.usedWords
-        this.letterCount = data.letterCount
+    load(data) {
+        if (!data || !data.hasOwnProperty('field') || !data.hasOwnProperty('words'))
+            throw new Error('Game: invalid load data:', data)
+        
         this.field.load(data.field)
-    }
-
-    loadFromStrings(strings) {
-        this.usedWords = []
-        this.field.fromStringArray(strings)
-
-        const middleLine = Math.floor(strings.length / 2)
-        console.log(`middleLine=${middleLine}`)
-        this.addUsedWord(strings[middleLine])
-
-        this.letterCount = 0
-        this.field.forEachCell((value, x, y) => { if (value !== alphabet.EmptySymbol) this.letterCount++ })
+        this.usedWords = data.words.reduce((acc, word) => { acc[word] = true; return acc }, {})
+        this.updateLetterCount()
     }
 }
 
-module.exports = Game
+export {
+    Game
+}

@@ -1,6 +1,6 @@
 "use strict"
 
-const utils = require("../utils.js")
+import * as utils from '../utils.js'
 
 const EmptySymbol = "."
 
@@ -12,12 +12,22 @@ class Alphabet {
         this.letters = utils.lettersOf(lettersString)
     }
 
-    contains(letter) {
+    containsLetter(letter) {
         return this.letters.includes(letter)
+    }
+
+    containsWord(word) {
+        const letters = Array.isArray(word) ? word : utils.lettersOf(word)
+        return letters.every(letter => this.letters.includes(letter))
     }
 }
 
-exports.EmptySymbol = EmptySymbol
-exports.Alphabet = Alphabet
-exports.Russian = new Alphabet(russian)
-exports.English = new Alphabet(english)
+const Russian = new Alphabet(russian)
+const English = new Alphabet(english)
+
+export {
+    EmptySymbol,
+    Alphabet,
+    Russian,
+    English,
+}

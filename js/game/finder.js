@@ -1,11 +1,10 @@
 "use strict"
 
-const utils = require('../utils.js')
-const alphabet = require('../dictionary/alphabet.js')
-const Dictionary = require('../dictionary/parsing.js')
-const DictionaryIndex = require('../dictionary/index.js')
-const Field = require('./field.js')
-const Game = require('./game.js')
+import * as alphabet from '../dictionary/alphabet.js'
+import { Dictionary } from '../dictionary/parsing.js'
+import { DictionaryIndex } from '../dictionary/index.js'
+import { Field } from './field.js'
+import { Game } from './game.js'
 
 const NotVisited = -1
 const HardWordLengthLimit = 12
@@ -266,17 +265,6 @@ class Finder {
         solution.addWord(step.currentWord())
     }
 
-    // longestChainLength() {
-    //     let firstNonEmptyCell = null
-    //     this.game.field.forEachCell((value, x, y) => { if (!firstNonEmptyCell) firstNonEmptyCell = { x: x, y: y} })
-
-    //     let mask = new Field()
-    //     mask.reset(this.game.field.size, 0)
-    //     let mark = (x, y) => {
-            
-    //     }
-    // }
-
     generateWords() {
         this.solutions = []
         const firstSteps = this.generatePossibleFirstSteps()
@@ -293,5 +281,7 @@ class Finder {
     }
 }
 
-exports.Finder = Finder
-exports.Solution = Solution
+export {
+    Finder,
+    Solution,
+}

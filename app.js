@@ -1,13 +1,16 @@
 "use strict"
 
-const utils = require("./js/utils.js")
-const alphabet = require("./js/dictionary/alphabet.js")
-const Dictionary = require("./js/dictionary/parsing.js")
-const DictionaryIndex = require("./js/dictionary/index.js")
-const Game = require("./js/game/game.js")
+import * as readline from 'readline'
+import * as jsUtil from 'util'
 
-const Finder = require("./js/game/finder.js").Finder
-const Solution = require("./js/game/finder.js").Solution
+import * as utils from './js/utils.js'
+import * as serverUtils from './js/server/utils.js'
+import * as alphabet from './js/dictionary/alphabet.js'
+import { Dictionary } from './js/dictionary/parsing.js'
+import { DictionaryIndex } from './js/dictionary/index.js'
+import { Game } from './js/game/game.js'
+
+import { Finder, Solution } from './js/game/finder.js'
 
 const dictionary = new Dictionary(alphabet.Russian)
 
@@ -25,91 +28,87 @@ async function loadDictionary() {
     return dictionaryIndex
 }
 
-const fieldData = [
-    ".....",
-    "ш....",
-    "кляча",
-    "ауп..",
-    "п.ш..",
-]
+async function promptInt(prompt) {
+    const reader = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    })
+
+    let result = 0
+    const question = jsUtil.promisify(reader.question).bind(reader)
+    await question(prompt, str => {
+        result = Number.parseInt(str)
+        reader.close()
+    })
+    return result
+} 
 
 async function startGame() {
     const dictionaryIndex = await loadDictionary()
 
     const fieldSize = 5
-    let game = new Game(fieldSize)
+    let game = new Game(alphabet.Russian, fieldSize)
+    try {
+        game.load(await serverUtils.loadObject('./saves/state.json'))
+    } catch (error) {
+        console.error("Failed to load game:", error)
+        return
+    }
 
-    const state = await utils.loadObject('./saves/state.json')
-    game.loadFromStrings(state.field)
-    state.words.forEach(word => game.addUsedWord(word))
-
-    console.log(game.field.toString())
+    console.log("Game loaded!", game.field.toString())
 
     let finder = new Finder(game, dictionary, dictionaryIndex)
-
     console.time("generate-solutions")
     finder.generateWords()
     console.timeEnd("generate-solutions")
+
     const solutions = finder.getSolutions()
     if (!solutions.length)
     {
         console.log("No solutions!")
-    }
-    else
-    {
-        console.log(`${solutions.length} soultions found.`)
-        solutions.sort((a, b) => a.compare(b))
-
-        const longestSolutionLength = solutions[0].bestWord().length
-        const minShownSolutions = 5
-        const maxShownSolutions = 10
-        // const bestSolutions = solutions.filter((solution, index) =>
-        //     (index < minShownSolutions || solution.bestWord().length > longestSolutionLength - 2) && index < maxShownSolutions
-        // )
-        // console.log(`${bestSolutions.length}/${solutions.length} best soultions shown.`)
-        // bestSolutions.forEach((solution, index) => console.log(`----${index}-----\n${solution.toString()}`))
-
-        const bestWords0 = solutions.reduce(
-            (acc, s) => {
-                s.words.forEach(word => {
-                    acc[word] = true
-                })
-                return acc
-            },
-            new Object()
-        )
-        console.log("Best words:")
-        const bestWords = Object.getOwnPropertyNames(bestWords0)
-            .sort(utils.longStringsFirstComparator)
-            .filter((_, index) => index < maxShownSolutions)
-        
-        bestWords.forEach((word, index) => console.log(`${index}: ${word} ${word.length}`))
-
-        const readline = require('readline').createInterface({
-            input: process.stdin,
-            output: process.stdout
-        })
-
-        readline.question(`Pick a word...`, indexStr => {
-            const index = Number.parseInt(indexStr)
-            console.log(`index=${index} ${bestWords.length}`)
-            if (index >= 0 && index < bestWords.length)
-            {   
-                const word = bestWords[index]
-                console.log(`Picked ${word}!`)
-                game.addUsedWord(word)   
-            }
-            readline.close()
-
-            const state = {
-                field: game.field.toStringArray(),
-                words: Object.getOwnPropertyNames(game.usedWords).filter(prop => prop != "length")
-            }
-            utils.saveObject(state, './saves/state.json')
-        })
+        return
     }
 
-    //await game.save('./saves/autosave.json')
+    console.log(`${solutions.length} soultions found.`)
+    solutions.sort((a, b) => a.compare(b))
+
+    const longestSolutionLength = solutions[0].bestWord().length
+    const minShownSolutions = 5
+    const maxShownSolutions = 10
+    
+    // const bestSolutions = solutions.filter((solution, index) =>
+    //     (index < minShownSolutions || solution.bestWord().length > longestSolutionLength - 2) && index < maxShownSolutions
+    // )
+    // console.log(`${bestSolutions.length}/${solutions.length} best soultions shown.`)
+    // bestSolutions.forEach((solution, index) => console.log(`----${index}-----\n${solution.toString()}`))
+
+    const bestWords0 = solutions.reduce(
+        (acc, s) => {
+            s.words.forEach(word => {
+                acc[word] = true
+            })
+            return acc
+        },
+        new Object()
+    )
+    console.log("Best words:")
+    const bestWords = Object.getOwnPropertyNames(bestWords0)
+        .sort(utils.longStringsFirstComparator)
+        .filter((_, index) => index < maxShownSolutions)
+    
+    bestWords.forEach((word, index) => console.log(`${index}: ${word} ${word.length}`))
+
+    const index = await promptInt('Pick a word...\n')
+    if (!Number.isInteger(index) || index < 0 || index >= bestWords.length)
+        return
+
+    const word = bestWords[index]
+    console.log(`Picked ${word}!`)
+    game.addUsedWord(word)
+
+    await serverUtils.saveObject(game.save(), './saves/state.json')
+    return
 }
 
-startGame()
+await startGame()
+process.exit(0)

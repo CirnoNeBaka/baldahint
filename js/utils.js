@@ -1,9 +1,5 @@
 "use strict"
 
-const fs = require('fs')
-const fsp = require('fs/promises')
-const readline = require('readline')
-
 function deepFreeze(obj) {
     let propNames = Object.getOwnPropertyNames(obj)
 
@@ -47,47 +43,10 @@ function longStringsFirstComparator(a, b) {
     }   
 }
 
-async function saveStrings(strings, filePath) {
-    const file = await fsp.open(filePath, 'w')
-    for (let i = 0; i < strings.length; ++i)
-        await file.write(strings[i] + "\n")
-    await file.close()
+export {
+    deepFreeze,
+    letter,
+    forEachLetter,
+    lettersOf,
+    longStringsFirstComparator,
 }
-
-async function loadStrings(filePath) {
-    const fileStream = fs.createReadStream(filePath)
-  
-    const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-    })
-   
-    let strings = []
-    for await (const line of rl)
-        strings.push(line)
-    return strings
-}
-
-async function saveObject(obj, filePath) {
-    const file = await fsp.open(filePath, 'w')
-    await file.write(JSON.stringify(obj, null, "\t"))
-    await file.close()
-}
-
-async function loadObject(filePath) {
-    const file = await fsp.open(filePath, 'r')
-    const data = await file.readFile()
-    const obj = JSON.parse(data)
-    await file.close()
-    return obj
-}
-
-exports.deepFreeze = deepFreeze
-exports.letter = letter
-exports.forEachLetter = forEachLetter
-exports.lettersOf = lettersOf
-exports.longStringsFirstComparator = longStringsFirstComparator
-exports.saveStrings = saveStrings
-exports.loadStrings = loadStrings
-exports.saveObject = saveObject
-exports.loadObject = loadObject

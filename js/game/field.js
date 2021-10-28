@@ -1,7 +1,7 @@
 "use strict"
 
-const utils = require("../utils.js")
-const alphabet = require("../dictionary/alphabet.js")
+import * as utils from '../utils.js'
+import * as alphabet from '../dictionary/alphabet.js'
 
 class Field {
     constructor() {
@@ -12,10 +12,6 @@ class Field {
     cloneFrom(other) {
         this.size = other.size
         this.cells = other.cells.slice(0)
-    }
-
-    addUsedWord(word) {
-        this.usedWords[word] = true
     }
 
     reset(size, value = alphabet.EmptySymbol) {
@@ -56,10 +52,7 @@ class Field {
     }
 
     forEachAdjacentCell(x, y, func) {
-        if (x - 1 >= 0)        func(this.get(x - 1, y), x - 1, y)
-        if (x + 1 < this.size) func(this.get(x + 1, y), x + 1, y)
-        if (y - 1 >= 0)        func(this.get(x, y - 1), x, y - 1)
-        if (y + 1 < this.size) func(this.get(x, y + 1), x, y + 1)
+        this.adjacentCells(x, y).forEach(cell => func(this.get(cell.x, cell.y), cell.x, cell.y))
     }
 
     toString() {
@@ -72,19 +65,6 @@ class Field {
             result += "\n"
         }
         return result
-    }
-
-    save() {
-        return {
-            cells: this.toStringArray()
-        }
-    }
-
-    load(fromData) {
-        if (!fromData.hasOwnProperty("cells"))
-            throw new Error("Invalid data trying to load field")
-
-        this.fromStringArray(fromData.cells)
     }
 
     toStringArray() {
@@ -109,9 +89,22 @@ class Field {
         }
     }
 
+    save() {
+        return this.toStringArray()
+    }
+
+    load(data) {
+        if (!Array.isArray(data) || !data.length)
+            throw new Error('Field: invalid load data:', data)
+
+        this.fromStringArray(data)
+    }
+
     hash() {
         return this.toStringArray().join("")
     }
 }
 
-module.exports = Field
+export {
+    Field
+}

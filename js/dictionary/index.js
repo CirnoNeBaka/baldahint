@@ -1,6 +1,6 @@
 "use strict"
 
-const utils = require("../utils.js")
+import * as utils from '../utils.js'
 
 const example = [
     // "абак",
@@ -119,7 +119,6 @@ class DictionaryIndex {
     }
 }
 
-// let testIndex = new DictionaryIndex(example)
-// console.log(testIndex.root)
-
-module.exports = DictionaryIndex
+export {
+    DictionaryIndex
+}
