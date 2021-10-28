@@ -4,6 +4,8 @@ import * as alphabet from '../dictionary/alphabet.js'
 import { Field } from '../game/field.js'
 import { Game } from '../game/game.js'
 
+const serverUrl = 'http://localhost:3000'
+
 function updateFiledViewHack() {
     // dirty hack to update view cell value
     let old = game.currentCell
@@ -11,23 +13,28 @@ function updateFiledViewHack() {
     game.currentCell = old
 }
 
+function handleServerResponse(data) {
+
+}
+
 const fieldSize = 5
+const initialWord = "жмудь"
 let game = new Game(alphabet.Russian, fieldSize)
 game.currentCell = { x: 0, y: 0 }
 
-game.setInitialWord("жмудь")
+game.setInitialWord(initialWord)
 
 game.addUsedWord("хуй")
 game.addUsedWord("пизда")
 game.addUsedWord("джигурда")
 
-let gameFieldView = new Vue({
+let view = new Vue({
     el: '#mainContainer',
     data: {
         game: game,
         field: game.field,
         usedWordsList: game.usedWordsList(),
-        solutionWords: [ "aaa", "bbb", "ccc" ],
+        solutionWords: [ "атмта", "ололо", "трололо" ],
         hoveredIndexUsed: -1,
         hoveredIndexSolutions: -1,
     },
@@ -59,6 +66,26 @@ let gameFieldView = new Vue({
         addToBlacklist: function(word) {
             console.log("Add to blacklist:", word)
         },
+        solve: function() {
+            console.log(`solve...`)
+            $.get(
+                serverUrl,
+                {
+                    command: "solve",
+                    data: this.game.save()
+                },
+                function(rawData) {
+                    const data = JSON.parse(rawData)
+                    if (!data || !data.words)
+                    {
+                        console.log(`Invalid server response:`, data)
+                        return
+                    }
+                    console.log(`Server response:`, data)
+                    view.$data.solutionWords = data.words.slice(0, 10)
+                }
+            )
+        }
     }
 })
 
@@ -88,3 +115,14 @@ document.onkeydown = function(event) {
 
     }
 }
+
+$.get(
+    serverUrl,
+    {
+        command: 'hello',
+        data: initialWord,
+    },
+    function(data) {
+       console.log('response: ' + data);
+    }
+)

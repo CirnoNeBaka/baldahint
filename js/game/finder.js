@@ -1,5 +1,6 @@
 "use strict"
 
+import * as utils from '../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
 import { Dictionary } from '../dictionary/parsing.js'
 import { DictionaryIndex } from '../dictionary/index.js'
@@ -278,6 +279,17 @@ class Finder {
 
     getSolutions() {
         return this.solutions
+    }
+
+    getSolutionWords() {
+        const words = this.solutions.reduce(
+            (acc, s) => {
+                s.words.forEach(word => acc.add(word))
+                return acc
+            },
+            new Set()
+        )
+        return Array.from(words.values()).sort(utils.longStringsFirstComparator)
     }
 }
 

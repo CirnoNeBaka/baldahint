@@ -9,7 +9,7 @@ class Game {
         this.alphabet = alphabet
         this.field = new Field()
         this.field.reset(fieldSize)
-        this.usedWords = {}
+        this.usedWords = new Set()
         this.letterCount = 0
     }
 
@@ -31,11 +31,11 @@ class Game {
     }
 
     addUsedWord(word) {
-        this.usedWords[word] = true
+        this.usedWords.add(word)
     }
 
     usedWordsList() {
-        return Object.getOwnPropertyNames(this.usedWords).filter(word => this.alphabet.containsWord(word))
+        return Array.from(this.usedWords.values())
     }
 
     updateLetterCount() {
@@ -44,11 +44,11 @@ class Game {
     }
 
     isWordUsed(word) {
-        return this.usedWords.hasOwnProperty(word)
+        return this.usedWords.has(word)
     }
 
     reset() {
-        this.usedWords = {}
+        this.usedWords.clear()
         this.letterCount = 0
         this.field.reset(this.field.size)
     }
@@ -56,7 +56,7 @@ class Game {
     save() {
         return {
             field: this.field.save(),
-            words: Object.getOwnPropertyNames(this.usedWords).filter(prop => prop != "length")
+            words: this.usedWordsList()
         }
     }
 
@@ -65,7 +65,7 @@ class Game {
             throw new Error('Game: invalid load data:', data)
         
         this.field.load(data.field)
-        this.usedWords = data.words.reduce((acc, word) => { acc[word] = true; return acc }, {})
+        this.usedWords = new Set(data.words)
         this.updateLetterCount()
     }
 }

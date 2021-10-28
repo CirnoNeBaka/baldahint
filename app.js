@@ -82,17 +82,8 @@ async function startGame() {
     // console.log(`${bestSolutions.length}/${solutions.length} best soultions shown.`)
     // bestSolutions.forEach((solution, index) => console.log(`----${index}-----\n${solution.toString()}`))
 
-    const bestWords0 = solutions.reduce(
-        (acc, s) => {
-            s.words.forEach(word => {
-                acc[word] = true
-            })
-            return acc
-        },
-        new Object()
-    )
     console.log("Best words:")
-    const bestWords = Object.getOwnPropertyNames(bestWords0)
+    const bestWords = finder.getSolutionWords()
         .sort(utils.longStringsFirstComparator)
         .filter((_, index) => index < maxShownSolutions)
     

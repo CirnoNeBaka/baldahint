@@ -6,6 +6,8 @@
     "main": "app.js",
     "license": "WTFPL",
     "dependencies": {
-        
+        "express": "^4.17.1",
+        "jquery": "^3.6.0",
+        "vue": "^2.6.14"
     }
 }
