@@ -4,6 +4,8 @@ import express from 'express'
 import * as serverUtils from './utils.js'
 import * as Command from '../game/protocol.js'
 import { GameInstance } from './instance.js'
+import { Game } from '../game/game.js'
+import { Finder } from '../game/finder.js'
 
 function checkMissingData(data, property) {
     if (!data.hasOwnProperty(property))
@@ -100,7 +102,9 @@ class Server {
         this.commands.set(Command.Solve, this.solve)
         this.commands.set(Command.GetSolutionVariants, this.getSolutionVariants)
         this.commands.set(Command.AddWord, this.addWord)
+        this.commands.set(Command.AddUsedWord, this.addUsedWord)
         this.commands.set(Command.SetLetter, this.setLetter)
+        this.commands.set(Command.GetNextStepInfo, this.getNextStepInfo)
     }
 
     startGame(data, gameInstance) {
@@ -111,7 +115,8 @@ class Server {
         //gameInstance.save(data.id) // todo: это перезагружает клиента!
 
         return {
-            game: gameInstance.game.save()
+            game: gameInstance.game.save(),
+            alphabet: gameInstance.game.alphabet.letters.join('')
         }
     }
 
@@ -151,6 +156,17 @@ class Server {
         }
     }
 
+    addUsedWord(data, gameInstance) {
+        checkMissingData(data, 'word')
+
+        gameInstance.game.addUsedWord(data.word)
+        //gameInstance.save(data.id)
+        
+        return {
+            game: gameInstance.game.save()
+        }
+    }
+
     setLetter(data, gameInstance) {
         checkMissingData(data, 'cell')
         checkMissingData(data, 'letter')
@@ -161,6 +177,28 @@ class Server {
         
         return {
             game: gameInstance.game.save()
+        }
+    }
+
+    getNextStepInfo(data, gameInstance) {
+        checkMissingData(data, 'cell')
+        checkMissingData(data, 'letter')
+        checkMissingData(data, 'word')
+
+        const x = parseInt(data.cell.x)
+        const y = parseInt(data.cell.y)
+        let futureGame = new Game(gameInstance.game.alphabet, gameInstance.game.field.size)
+        futureGame.load(gameInstance.game.save())
+        futureGame.setLetter(x, y, data.letter)
+        futureGame.addUsedWord(data.word)
+
+        let futureSeer = new Finder(futureGame, gameInstance.dictionary, gameInstance.dictionaryIndex)
+        futureSeer.generateWords()
+
+        let solutions = futureSeer.getSolutionWords()
+        return {
+            longestWords: solutions.slice(0, 3),
+            maxWordLength: solutions[0].length,
         }
     }
 }

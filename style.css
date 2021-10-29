@@ -2,7 +2,7 @@ body {
     background: #161616
 }
 
-h1, p, b, div, td, th {
+h1, p, b, span, div, td, th {
     color: white;
     font-family: 'Courier New';
 }
@@ -22,39 +22,15 @@ button:hover {
     background-color: #444444;
 }
 
+.page {
+    width: 100%;
+    height: 100%;
+}
+
+.page,
 .mainContainer {
     display: grid;
     grid-gap: 10px;
-}
-
-#gameField {
-    grid-row-start: 1;
-    grid-row-end: 2;
-    grid-column-start: 1;
-    grid-column-end: 2;
-    margin-top: 50px;
-}
-
-#usedWords {
-    grid-row-start: 1;
-    grid-row-end: 2;
-    grid-column-start: 2;
-    grid-column-end: 3;
-}
-
-#solutionWords {
-    grid-row-start: 2;
-    grid-row-end: 3;
-    grid-column-start: 1;
-    grid-column-end: 2;
-}
-
-#newGameButton {
-    margin-top: 8px;
-    grid-row-start: 3;
-    grid-row-end: 4;
-    grid-column-start: 1;
-    grid-column-end: 2;
 }
 
 .fieldTable {
@@ -82,6 +58,10 @@ button:hover {
     background-color: #444444;
 }
 
+.fieldCell[isVariant=true] {
+    color: red;
+}
+
 .wordList
 {
     height: 275px;
@@ -101,14 +81,68 @@ button:hover {
 }
 
 .wordListItem:hover {
+    background-color: #666666;
+}
+
+.wordListItem[isSelected=true] {
     background-color: #444444;
 }
 
 .wordListItemButton {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     float: right;
     padding: 0px;
+    text-align: center;
+}
+
+.wordListItemButton:hover {
+    background-color: #666666;
+}
+
+#gameField {
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    margin-top: 50px;
+}
+
+#usedWords {
+    grid-row-start: 1;
+    grid-row-end: 2;
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+#solutionWords {
+    grid-row-start: 2;
+    grid-row-end: 3;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+#solutionVariants {
+    grid-row-start: 2;
+    grid-row-end: 3;
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+#newGameButton {
+    width: 400px;
+    height: 150px;
+    margin-top: 8px;
+    font-size: 40px;
+
+    grid-row-start: 3;
+    grid-row-end: 4;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+#nextStepHint {
+    font-size: 14px;
 }
 
 #solveButton {

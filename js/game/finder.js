@@ -27,7 +27,8 @@ class Step {
     init(field, initialCell, stepIndex) {
         this.field = field
         this.stepIndex = stepIndex
-        this.currentCell = initialCell
+        this.initialCell = { x: initialCell.x, y: initialCell.y }
+        this.currentCell = { x: initialCell.x, y: initialCell.y }
         this.currentLetters = [ field.get(initialCell.x, initialCell.y) ]
 
         this.visitMask = new Field()
@@ -39,6 +40,7 @@ class Step {
         this.field = new Field()
         this.field.cloneFrom(other.field)
         this.stepIndex = other.stepIndex
+        this.initialCell = { x: other.initialCell.x, y: other.initialCell.y }
         this.currentCell = { x: other.currentCell.x, y: other.currentCell.y }
         this.currentLetters = other.currentLetters.slice(0)
 
@@ -268,9 +270,10 @@ class Finder {
         if (index < 0) {
             solution = new Solution()
             solution.field.cloneFrom(step.field)
-            solution.newLetterCell = { x: step.currentCell.x, y: step.currentCell.y }
-            solution.newLetter = step.field.get(step.currentCell.x, step.currentCell.y)
+            solution.newLetterCell = { x: step.initialCell.x, y: step.initialCell.y }
+            solution.newLetter = step.field.get(step.initialCell.x, step.initialCell.y)
             this.solutions.push(solution)
+            log('Added solution field:', solution.field.save(), `${solution.newLetter} ${solution.newLetterCell.x}:${solution.newLetterCell.y} | ${step.currentWord()}`)
         } else {
             solution = this.solutions[index]
         }
@@ -282,7 +285,7 @@ class Finder {
         this.solutions = []
         const firstSteps = this.generatePossibleFirstSteps()
         const prefixChains = this.generatePrefixChains(firstSteps)
-        console.log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
+        log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
         firstSteps.concat(prefixChains).forEach(step => {
             log(`--- Step: ${step.currentWord()}`)
             this.nextPostfix(step)

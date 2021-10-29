@@ -8,8 +8,8 @@ const russian = "абвгдежзийклмнопрстуфхцчшщьыъэю�
 const english = "abcdefghijklmnopqrstuvwxyz"
 
 class Alphabet {
-    constructor(lettersString) {
-        this.letters = utils.lettersOf(lettersString)
+    constructor(letters) {
+        this.letters = Array.isArray(letters) ? letters.slice() : utils.lettersOf(letters)
     }
 
     containsLetter(letter) {

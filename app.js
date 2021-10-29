@@ -87,13 +87,13 @@ async function startGame() {
         .sort(utils.longStringsFirstComparator)
         .filter((_, index) => index < maxShownSolutions)
     
-    bestWords.forEach((word, index) => console.log(`${index}: ${word} ${word.length}`))
+    bestWords.forEach((word, index) => console.log(`${index + 1}: ${word} ${word.length}`))
 
     const index = await promptInt('Pick a word...\n')
-    if (!Number.isInteger(index) || index < 0 || index >= bestWords.length)
+    if (!Number.isInteger(index) || index <= 0 || index > bestWords.length)
         return
 
-    const word = bestWords[index]
+    const word = bestWords[index - 1]
     console.log(`Picked ${word}!`)
     game.addUsedWord(word)
 
