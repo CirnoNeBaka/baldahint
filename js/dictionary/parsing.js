@@ -98,6 +98,18 @@ class Dictionary {
             })
             .forEach(line => this.addWord(line))
     }
+
+    loadSync(filePath) {
+        this.parsingLog = []
+        this.words = []
+        const lines = serverUtils.loadStringsSync(filePath)
+        lines.filter(line => {
+                const valid = this.validateWord(line)
+                if (!valid) this.parsingLog.push(`Invalid word skipped: ${line}`)
+                return valid
+            })
+            .forEach(line => this.addWord(line))
+    }
 }
 
 export {

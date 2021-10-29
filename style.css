@@ -49,6 +49,14 @@ button:hover {
     grid-column-end: 2;
 }
 
+#newGameButton {
+    margin-top: 8px;
+    grid-row-start: 3;
+    grid-row-end: 4;
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
 .fieldTable {
     border-spacing: 0px;
     border: 1px solid #aaaaaa;

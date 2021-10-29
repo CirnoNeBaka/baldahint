@@ -23,10 +23,16 @@ class Field {
     }
 
     get(x, y) {
+        if (!this.isInside(x, y))
+            throw new Error(`Out of bounds get ${x}:${y}`)
+
         return this.cells[x + this.size * y]
     }
 
     set(x, y, value) {
+        if (!this.isInside(x, y))
+            throw new Error(`Out of bounds set ${x}:${y}`)
+
         this.cells[x + this.size * y] = value
     }
 

@@ -11,6 +11,13 @@ async function saveStrings(strings, filePath) {
     await file.close()
 }
 
+function saveStringsSync(strings, filePath) {
+    const file = fs.openSync(filePath, 'w')
+    for (let i = 0; i < strings.length; ++i)
+        fs.appendFileSync(file, strings[i] + "\n")
+    fs.closeSync(file)
+}
+
 async function loadStrings(filePath) {
     const fileStream = fs.createReadStream(filePath)
   
@@ -23,6 +30,12 @@ async function loadStrings(filePath) {
     for await (const line of rl)
         strings.push(line)
     return strings
+}
+
+function loadStringsSync(filePath) {
+    const file = fs.openSync(filePath, 'r')
+    const data = fs.readFileSync(file).toString()
+    return data.split('\n')
 }
 
 async function saveObject(obj, filePath) {
@@ -41,7 +54,9 @@ async function loadObject(filePath) {
 
 export {
     saveStrings,
+    saveStringsSync,
     loadStrings,
+    loadStringsSync,
     saveObject,
     loadObject,
 }

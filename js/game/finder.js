@@ -72,11 +72,13 @@ class Step {
 class Solution {
     constructor() {
         this.field = new Field()
+        this.newLetterCell = { x: 0, y: 0 }
+        this.newLetter = alphabet.EmptySymbol
         this.words = []
         this.nextBestWordLength = 0
     }
 
-    addWord(word) {
+    addWord(word, cell, letter) {
         let i = 0
         for (; i < this.words.length; ++i) {
             const w = this.words[i]
@@ -103,6 +105,14 @@ class Solution {
         buffer += this.field.toString()
         this.words.forEach(word => buffer += `${word} ${word.length}\n`)
         return buffer
+    }
+
+    save() {
+        return {
+            letter: this.newLetter,
+            cell: this.newLetterCell,
+            field: this.field.save(),
+        }
     }
 } 
 
@@ -220,7 +230,7 @@ class Finder {
         log(`Trying word: ${step.currentWord()}`)
 
         if (!this.game.isWordUsed(step.currentWord()) && this.dictionaryIndex.indexOf(step.currentLetters) != -1)
-            this.addSoultion(step)
+            this.addSolution(step)
 
         if (step.currentLetters.length + 1 > this.maxWordLength())
             return
@@ -252,12 +262,14 @@ class Finder {
         step.visitMask.set(step.currentCell.x, step.currentCell.y, NotVisited)
     }
 
-    addSoultion(step) {
+    addSolution(step) {
         let solution = null
         let index = this.solutions.findIndex((solution => solution.field.hash() == step.field.hash()))
         if (index < 0) {
             solution = new Solution()
             solution.field.cloneFrom(step.field)
+            solution.newLetterCell = { x: step.currentCell.x, y: step.currentCell.y }
+            solution.newLetter = step.field.get(step.currentCell.x, step.currentCell.y)
             this.solutions.push(solution)
         } else {
             solution = this.solutions[index]
