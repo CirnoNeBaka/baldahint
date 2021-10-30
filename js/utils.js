@@ -1,6 +1,22 @@
 "use strict"
 
-function deepFreeze(obj) {
+export function localeCompare(a, b) {
+    if (!a)
+        return -1
+    return a.localeCompare(b)
+}
+
+export function getProperty(data, property, defaultValue) {
+    return data.hasOwnProperty(property) ? data[property] : defaultValue 
+}
+
+export function getRequiredProperty(data, property) {
+    if (!data.hasOwnProperty(property))
+        throw new Error(`Missing required property ${property} of object ${data}!`)
+    return data[property]
+}
+
+export function deepFreeze(obj) {
     let propNames = Object.getOwnPropertyNames(obj)
 
     propNames.forEach(function(name) {
@@ -13,22 +29,22 @@ function deepFreeze(obj) {
     return Object.freeze(obj)
 }
 
-function forEachLetter(word, callback) {
+export function forEachLetter(word, callback) {
     for (let i = 0; i < word.length; ++i)
         callback(word.slice(i, i+1), i)
 }
 
-function letter(word, index) {
+export function letter(word, index) {
     return word.slice(index, index + 1)
 }
 
-function lettersOf(word) {
+export function lettersOf(word) {
     let result = []
     forEachLetter(word, letter => result.push(letter))
     return result
 }
 
-function longStringsFirstComparator(a, b) {
+export function longStringsFirstComparator(a, b) {
     if (a.length > b.length)
     {
         return -1
@@ -41,12 +57,4 @@ function longStringsFirstComparator(a, b) {
     {
         return 1
     }   
-}
-
-export {
-    deepFreeze,
-    letter,
-    forEachLetter,
-    lettersOf,
-    longStringsFirstComparator,
 }

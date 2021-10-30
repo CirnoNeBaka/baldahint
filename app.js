@@ -6,18 +6,25 @@ import * as jsUtil from 'util'
 import * as utils from './js/utils.js'
 import * as serverUtils from './js/server/utils.js'
 import * as alphabet from './js/dictionary/alphabet.js'
-import { Dictionary } from './js/dictionary/parsing.js'
+import { Profile } from './js/dictionary/profile.js'
+import { Dictionary } from './js/dictionary/dictionary.js'
 import { DictionaryIndex } from './js/dictionary/index.js'
 import { Game } from './js/game/game.js'
 
 import { Finder, Solution } from './js/game/finder.js'
+import { getAvailableProfileNames, loadProfile } from './js/server/instance.js'
 
-const dictionary = new Dictionary(alphabet.Russian)
+const profiles = getAvailableProfileNames()
+console.log('Available profiles:', profiles)
+
+const profile = loadProfile(profiles[0])
+
+const dictionary = new Dictionary(profile)
 
 async function loadDictionary() {
     console.log("Loading dictionary...")
     console.time("load-dictionary")
-    await dictionary.load("./dictionaries/processed/nouns.txt")
+    dictionary.load()
     console.timeEnd("load-dictionary")
     console.log(`${dictionary.words.length} words in dictionary.\n`)
 
@@ -47,9 +54,9 @@ async function startGame() {
     const dictionaryIndex = await loadDictionary()
 
     const fieldSize = 5
-    let game = new Game(alphabet.Russian, fieldSize)
+    let game = new Game(fieldSize)
     try {
-        game.load(await serverUtils.loadObject('./saves/state.json'))
+        game.load(serverUtils.loadObjectSync('./saves/state.json'))
     } catch (error) {
         console.error("Failed to load game:", error)
         return
@@ -90,6 +97,7 @@ async function startGame() {
     bestWords.forEach((word, index) => console.log(`${index + 1}: ${word} ${word.length}`))
 
     const index = await promptInt('Pick a word...\n')
+    console.log(index)
     if (!Number.isInteger(index) || index <= 0 || index > bestWords.length)
         return
 

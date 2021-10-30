@@ -3,10 +3,14 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-    <h1>baldahint</h1>
     <div id="mainContainer" class="mainContainer">
+        <h1>baldahint</h1>
         <div id="startGamePage" class="page" v-show="currentPage == 'start'">
             <button id="newGameButton" v-on:click="startNewGame">Start new game</button>
+            <button id="loadGameButton" v-on:click="loadGame" v-bind:disabled="!savedGameExists">Load game</button>
+            <select id="profileCombobox" v-model="selectedProfile">
+                <option v-for="p in profiles" v-bind:name="p">{{ p }}</option>
+            </select>
         </div>
         <div id="gamePage" class="page" v-show="currentPage == 'game'">
             <div id="gameField">
@@ -25,7 +29,11 @@
                             </td>
                         </tr>
                     </table>
-                    <button id="solveButton" v-on:click="solve">Solve</button>
+                    <button
+                        id="solveButton"
+                        v-on:click="solve"
+                        v-bind:disabled="waitingForServerResponse"
+                    >Solve</button>
                 </div>
             </div>
             <div id="usedWords">
@@ -43,9 +51,17 @@
                             v-show="hoveredIndexUsed == i"
                             v-on:click="addToWhitelist(usedWordsList[i-1])"
                         >➕</button>
+                        <button
+                            class="wordListItemButton"
+                            v-show="hoveredIndexUsed == i"
+                            v-on:click="addToBlacklist(usedWordsList[i-1])"
+                        >❌</button>
                     </div>
                 </div>
-                <button v-on:click="addUsedWord">Add word</button>
+                <button
+                    v-on:click="addUsedWord"
+                    v-bind:disabled="waitingForServerResponse"
+                >Add word</button>
             </div>
             <div id="solutionWords">
                 <p>Solutions:</p>
@@ -86,7 +102,7 @@
                         >✔️</button>
                         <button
                             class="wordListItemButton"
-                            v-show="hoveredVariantIndex == i || selectedVariantIndex == i-1"
+                            v-show="!hasNextStepInfo(i-1) && (hoveredVariantIndex == i || selectedVariantIndex == i-1)"
                             v-on:click="getNextStepInfo(i-1)"
                         >❔</button>
                         <span id="nextStepHint" v-bind:title="getLongNextStepDescription(i-1)">
@@ -94,6 +110,13 @@
                         </span>
                     </div>
                 </div>
+            </div>
+            <div id="footer">
+                <p>{{ `Profile: ${selectedProfile}` }}</p>
+                <button
+                    id="exitGameButton"
+                    v-on:click="exitGame"
+                >Save & Exit game</button>
             </div>
         </div>
     </div>

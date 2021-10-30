@@ -5,8 +5,7 @@ import * as alphabet from '../dictionary/alphabet.js'
 import { Field } from './field.js'
 
 class Game {
-    constructor(alphabet, fieldSize) {
-        this.alphabet = alphabet
+    constructor(fieldSize) {
         this.field = new Field()
         this.field.reset(fieldSize)
         this.usedWords = new Set()

@@ -2,8 +2,9 @@
 
 import * as alphabet from '../dictionary/alphabet.js'
 import * as Command from '../game/protocol.js'
-import { Field } from '../game/field.js'
 import { Game } from '../game/game.js'
+import { Solution } from '../game/finder.js'
+import { FutureSeer } from './seer.js'
 
 function clamp(min, x, max) {
     return Math.min(max, Math.max(x, min))
@@ -11,6 +12,7 @@ function clamp(min, x, max) {
 
 const serverUrl = 'http://localhost:3000'
 const clientID = 'test'
+const clientVersion = '1.0.0'
 
 const PageStart = 'start'
 const PageGame = 'game'
@@ -20,13 +22,19 @@ class Client {
         this.id = clientID
         this.data = {}
         this.view = null
+        this.solutions = []
+        this.seer = new FutureSeer(this)
         this.reset()
     }
 
     reset() {
         this.data = {
             client: this,
-            game: new Game(alphabet.Russian, 5),
+            savedGameExists: false,
+            profiles: [],
+            selectedProfile: '',
+            alphabet: new alphabet.Alphabet(alphabet.RussianID),
+            game: new Game(5),
             currentPage: PageStart,
             currentCell: { x: 0, y: 0 },
             solutionWords: [],
@@ -38,6 +46,7 @@ class Client {
             selectedSolutionIndex: -1,
             hoveredVariantIndex: -1,
             selectedVariantIndex: -1,
+            waitingForServerResponse: false,
         }
     }
 
@@ -53,7 +62,7 @@ class Client {
                     if (this.$data.selectedVariantIndex == -1)
                         return false
                     let variant = this.$data.solutionVariants[this.$data.selectedVariantIndex]
-                    return variant.cell.x == x && variant.cell.y == y
+                    return variant.newLetterCell.x == x && variant.newLetterCell.y == y
                 },
                 selectCell: function(x, y) {
                     this.$data.currentCell = { x: x, y: y }
@@ -62,17 +71,17 @@ class Client {
                     if (this.$data.selectedVariantIndex != -1)
                     {
                         let variant = this.$data.solutionVariants[this.$data.selectedVariantIndex]
-                        if (x == variant.cell.x && y == variant.cell.y)
-                            return variant.letter.toUpperCase()
+                        if (x == variant.newLetterCell.x && y == variant.newLetterCell.y)
+                            return variant.newLetter.toUpperCase()
                     }
                     const value = this.$data.game.field.get(x, y)
                     return value != alphabet.EmptySymbol ? value.toUpperCase() : ' '
                 },
                 addUsedWord: function() {
-                    const word = prompt("Add used word:", "")
+                    const word = prompt('Add used word:', '')
                     if (!word)
                         return
-                    if (!this.$data.game.alphabet.containsWord(word)) {
+                    if (!this.$data.alphabet.containsWord(word)) {
                         alert(`Invalid word: ${word}`)
                         return
                     }
@@ -92,10 +101,18 @@ class Client {
                     )
                 },
                 addToWhitelist: function(word) {
-                    console.log("Add to whitelist:", word)
+                    this.$data.client.sendRequest(this, Command.AddToWhitelist, { word: word }, function(view, data) {})
                 },
                 addToBlacklist: function(word) {
-                    console.log("Add to blacklist:", word)
+                    this.$data.client.sendRequest(this, Command.AddToBlacklist, { word: word }, function(view, data) {
+                        const solutionIndex = view.$data.solutionWords.indexOf(word)
+                        if (solutionIndex >= 0)
+                            view.$data.solutionWords.splice(solutionIndex, 1)
+
+                        const usedWordsIndex = view.$data.usedWordsList.indexOf(word)
+                        if (usedWordsIndex >= 0)
+                            view.$data.usedWordsList.splice(usedWordsIndex, 1)
+                    })
                 },
                 startNewGame: function() {
                     const word = prompt('Enter initial word:', 'жмудь')
@@ -106,67 +123,110 @@ class Client {
                     }
                     this.$data.client.sendRequest(this, Command.StartGame,
                         {
+                            profile: this.$data.selectedProfile,
                             initialWord: word,
                             fieldSize: 5,
                         },
                         function (view, data) {
                             console.log(`Game started!`)
+                            view.$data.alphabet.load(data.alphabet)
                             view.$data.game.load(data.game)
-                            view.$data.game.alphabet = new alphabet.Alphabet(data.alphabet)
                             view.$data.usedWordsList = view.$data.game.usedWordsList()
                             view.$data.client.resetSolutions()
+                            view.$data.client.seer.stop()
                             view.$data.currentPage = PageGame
                         }
                     )
                 },
+                loadGame: function() {
+                    this.$data.client.sendRequest(this, Command.LoadGame, {},
+                        function (view, data) {
+                            console.log(`Game loaded!`)
+                            view.$data.alphabet.load(data.alphabet)
+                            view.$data.game.load(data.game)
+                            view.$data.usedWordsList = view.$data.game.usedWordsList()
+                            view.$data.client.resetSolutions()
+                            view.$data.client.seer.stop()
+                            view.$data.currentPage = PageGame
+                        }
+                    )
+                },
+                exitGame: function() {
+                    if (!confirm('Do you REALLY want to EXIT the game?'))
+                        return
+
+                    this.$data.client.sendRequest(this, Command.ExitGame, { saveGame: true },
+                        function (view, data) {
+                            console.log(`Game exited!`)
+                            view.$data.game.reset()
+                            view.$data.usedWordsList = []
+                            view.$data.client.resetSolutions()
+                            view.$data.client.seer.stop()
+                            view.$data.currentPage = PageStart
+                        }
+                    )
+                },
                 solve: function() {
-                    console.log(`solve...`)
+                    this.$data.solutionWords = [ 'Waiting...' ]
                     this.$data.client.solve()
                     this.$data.client.resetSolutionSelection()
                 },
                 selectSolution: function(index) {
                     this.$data.selectedSolutionIndex = index
                     this.$data.selectedVariantIndex = -1
-                    this.$data.client.sendRequest(this, Command.GetSolutionVariants,
-                        {
-                            word: this.$data.solutionWords[index]
-                        },
-                        function(view, data) {
-                            view.$data.solutionVariants = data.variants
-                            if (data.variants.length > 0)
-                                view.$data.selectedVariantIndex = 0
-                        }
-                    )
+                    const word = this.$data.solutionWords[index]
+                    this.$data.solutionVariants = this.$data.client.getSolutionVariants(word)
+                    if (this.$data.solutionVariants.length > 0)
+                        this.$data.selectedVariantIndex = 0
+
+                    // this.$data.client.sendRequest(this, Command.GetSolutionVariants,
+                    //     {
+                    //         word: this.$data.solutionWords[index]
+                    //     },
+                    //     function(view, data) {
+                    //         view.$data.solutionVariants = data.variants
+                    //         if (data.variants.length > 0)
+                    //             view.$data.selectedVariantIndex = 0
+                    //     }
+                    // )
                 },
                 selectVariant: function(index) {
                     this.$data.selectedVariantIndex = index
                 },
                 getSolutionVariantDescription: function(index) {
                     let variant = this.$data.solutionVariants[index]
-                    const string = `(${variant.cell.x}:${variant.cell.y})`
+                    const string = `(${variant.newLetterCell.x}:${variant.newLetterCell.y})`
                     return string
                 },
                 applyVariant: function(index) {
                     let variant = this.$data.solutionVariants[index]
                     this.$data.client.sendRequest(this, Command.AddWord,
                         {
-                            letter: variant.letter,
-                            cell: { x: variant.cell.x, y: variant.cell.y },
+                            letter: variant.newLetter,
+                            cell: { x: variant.newLetterCell.x, y: variant.newLetterCell.y },
                             word: this.$data.solutionWords[this.$data.selectedSolutionIndex],
                         },
                         function(view, data) {
                             view.$data.game.load(data.game)
                             view.$data.usedWordsList = view.$data.game.usedWordsList()
                             view.$data.client.resetSolutions()
+                            view.$data.client.seer.stop()
                         }
                     )
                 },
+                hasNextStepInfo: function(index) {
+                    let variant = this.$data.solutionVariants[index]
+                    return !!variant.nextStepInfo || this.$data.client.seer.getInfo(variant)
+                },
                 getNextStepInfo: function(index) {
                     let variant = this.$data.solutionVariants[index]
+                    if (this.$data.seer.getInfo(variant))
+                        return
+                    
                     this.$data.client.sendRequest(this, Command.GetNextStepInfo,
                         {
-                            letter: variant.letter,
-                            cell: { x: variant.cell.x, y: variant.cell.y },
+                            letter: variant.newLetter,
+                            cell: { x: variant.newLetterCell.x, y: variant.newLetterCell.y },
                             word: this.$data.solutionWords[this.$data.selectedSolutionIndex],
                         },
                         function(view, data) {
@@ -175,7 +235,8 @@ class Client {
                     )
                 },
                 getShortNextStepDescription: function(index) {
-                    const data = this.$data.solutionVariants[index].nextStepInfo
+                    const variant = this.$data.solutionVariants[index]
+                    const data = this.$data.client.getNextStepInfo(variant)
                     if (!data)
                         return ''
                     
@@ -183,13 +244,34 @@ class Client {
                     return `Next: ${maxLength} (${data.longestWords.filter(word => word.length == maxLength).length})`
                 },
                 getLongNextStepDescription: function(index) {
-                    const data = this.$data.solutionVariants[index].nextStepInfo
+                    const variant = this.$data.solutionVariants[index]
+                    const data = this.$data.client.getNextStepInfo(variant)
                     if (!data)
                         return ''
                     
                     return `${data.longestWords.join(', ')}`
                 },
             }
+        })
+    }
+
+    sayHello() {
+        this.sendRequest(this.view, Command.Hello, { version: clientVersion }, function(view, data){
+            console.log(`Server version: ${data.version} (game exists = ${data.gameExists})`)
+            view.$data.savedGameExists = data.gameExists
+
+            const serverVersion = data.version
+            if (serverVersion != clientVersion)
+                console.warn(`Client version ${clientVersion} differs from server version ${serverVersion}! This might be a problem.`)
+        })
+    }
+
+    getProfiles() {
+        this.sendRequest(this.view, Command.GetProfiles, {}, function(view, data){
+            view.$data.profiles = data.profiles
+            if (data.profiles.length)
+                view.$data.selectedProfile = data.profiles[0]
+            console.log(`Profiles:`, data.profiles)
         })
     }
 
@@ -208,6 +290,7 @@ class Client {
         this.resetVariants()
         this.resetSolutionSelection()
         this.data.solutionWords = []
+        this.solutions = []
     }
 
     resetVariants() {
@@ -230,6 +313,7 @@ class Client {
     }
 
     setFieldLetter(letter) {
+        this.seer.stop()
         this.data.game.field.set(this.data.currentCell.x, this.data.currentCell.y, letter)
         this.updateFieldViewHack()
         this.sendRequest(
@@ -246,16 +330,39 @@ class Client {
     }
 
     solve() {
+        this.seer.stop()
         this.sendRequest(this.view, Command.Solve,
             {},
             function (view, data) {
                 console.log(`Solved!`)
-                view.$data.solutionWords = data.words.slice(0, 10)
+                view.$data.solutionWords = data.words.slice(0, 30)
+
+                view.$data.client.solutions = data.solutions.map(solutionData => {
+                    let solution = new Solution()
+                    solution.load(solutionData)
+                    return solution
+                })
+
+                view.$data.client.seer.start()
             }
         )
     }
 
+    getSolutionVariants(word) {
+        return this.solutions.filter(solution => solution.words.includes(word))
+    }
+
+    getNextStepInfo(variant) {
+        if (!!variant.nextStepInfo)
+            return variant.nextStepInfo
+
+        return this.seer.getInfo(variant)
+    }
+
     sendRequest(view, command, data, callback) {
+        if (command != Command.GetNextStepInfo)
+            view.$data.waitingForServerResponse = true
+
         $.get(
             serverUrl,
             {
@@ -264,6 +371,7 @@ class Client {
                 data: data,
             },
             function(rawData) {
+                view.$data.waitingForServerResponse = false
                 const data = JSON.parse(rawData)
                 if (!data) {
                     console.error(`Invalid server response:`, data)
@@ -278,6 +386,7 @@ class Client {
             }
         ).catch(function (error) {
             console.error(`Request error:`, error)
+            view.$data.waitingForServerResponse = false
         })
     }
 
@@ -289,7 +398,7 @@ class Client {
         event = event || window.event
         console.log(`${event.key} ${event.code} pressed`)
     
-        if (client.data.game.alphabet.containsLetter(event.key)) {
+        if (client.data.alphabet.containsLetter(event.key)) {
             client.setFieldLetter(event.key)
         } else if (event.code == 'Space') {
             client.setFieldLetter(alphabet.EmptySymbol)
@@ -310,3 +419,5 @@ class Client {
 let client = new Client()
 document.onkeydown = client.handleKeyboardEvent
 client.setupView()
+client.sayHello()
+client.getProfiles()

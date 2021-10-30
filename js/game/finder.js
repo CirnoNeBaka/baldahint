@@ -2,10 +2,10 @@
 
 import * as utils from '../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
-import { Dictionary } from '../dictionary/parsing.js'
-import { DictionaryIndex } from '../dictionary/index.js'
+// import { Dictionary } from '../dictionary/dictionary.js'
+// import { DictionaryIndex } from '../dictionary/index.js'
 import { Field } from './field.js'
-import { Game } from './game.js'
+// import { Game } from './game.js'
 
 const NotVisited = -1
 const HardWordLengthLimit = 12
@@ -109,12 +109,24 @@ class Solution {
         return buffer
     }
 
+    hash() {
+        return `${this.newLetter} ${this.newLetterCell.x}:${this.newLetterCell.y}`
+    }
+
     save() {
         return {
             letter: this.newLetter,
             cell: this.newLetterCell,
-            field: this.field.save(),
+            words: this.words,
+            //field: this.field.save(),
         }
+    }
+
+    load(data) {
+        this.newLetter = data.letter
+        this.newLetterCell = { x: parseInt(data.cell.x), y: parseInt(data.cell.y) }
+        this.words = data.words
+        //this.field.load(data.field)
     }
 } 
 
@@ -145,7 +157,7 @@ class Finder {
         let steps = []
         this.game.field.forEachCell((value, i, j) => {
             if (this.game.field.get(i, j) === alphabet.EmptySymbol && this.hasAdjacentLetters(this.game.field, i, j)) {
-                this.dictionary.alphabet.letters.forEach(letter => {
+                this.dictionary.profile.alphabet.letters.forEach(letter => {
                     let nextField = new Field()
                     nextField.cloneFrom(this.game.field)
                     nextField.set(i, j, letter)
@@ -231,8 +243,13 @@ class Finder {
     nextPostfix(step) {
         log(`Trying word: ${step.currentWord()}`)
 
-        if (!this.game.isWordUsed(step.currentWord()) && this.dictionaryIndex.indexOf(step.currentLetters) != -1)
+        if (true
+            && !this.game.isWordUsed(step.currentWord())
+            && this.dictionaryIndex.indexOf(step.currentLetters) != -1
+            && !this.dictionary.profile.isBlacklisted(step.currentWord())
+        ){
             this.addSolution(step)
+        }
 
         if (step.currentLetters.length + 1 > this.maxWordLength())
             return

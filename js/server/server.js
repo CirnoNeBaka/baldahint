@@ -3,9 +3,11 @@ import express from 'express'
 
 import * as serverUtils from './utils.js'
 import * as Command from '../game/protocol.js'
-import { GameInstance } from './instance.js'
+import { GameInstance, getAvailableProfileNames, savedInstanceExists } from './instance.js'
 import { Game } from '../game/game.js'
 import { Finder } from '../game/finder.js'
+
+const serverVersion = '1.0.0'
 
 function checkMissingData(data, property) {
     if (!data.hasOwnProperty(property))
@@ -34,7 +36,9 @@ class Server {
         this.setupGameProtocol()
 
         this.app.get('/', (req, res) => {
+            console.log('==================================================')
             console.log(`Got a request!`, req.path, req.method, req.query)
+            console.log(`${this.instances.size} instances running:`, Array.from(this.instances.keys()))
             const data = req.query
             try {
                 if (!data)
@@ -43,29 +47,30 @@ class Server {
                 checkMissingData(data, 'id')
                 checkMissingData(data, 'command')
 
-                if (!this.commands.has(data.command))
-                    throw new Error(`Unknown command: ${data.command}`)
-
-                const isGameStartup = data.command == Command.StartGame
-                let instance = this.instances.get(data.id)
-                if (isGameStartup) {
-                    instance = this.addInstance(data.id)
+                let response = {}
+                let globalCommand = this.globalCommands.get(data.command)
+                if (globalCommand) {
+                    response = globalCommand(this, data)
                 } else {
-                    if (!instance) {
-                        instance = this.tryRestoreInstance(data.id)
-                        if (!instance)
-                            throw new Error('You need to start the game first!')
-                    }
+                    let instance = this.instances.get(data.id)
+                    if (!instance)
+                        throw new Error(`You need to start the game before sending command ${data.command}!`)
+
+                    let command = this.commands.get(data.command)
+                    if (command)
+                        response = command(data.data, instance)
+                    else
+                        throw new Error(`Unknown command ${data.command}!`)
                 }
 
-                const response = this.commands.get(data.command)(data.data, instance)
                 console.log('response:', response)
+                console.log(`${this.instances.size} instances running:`, Array.from(this.instances.keys()), '\n')
                 res.send(JSON.stringify({
                     status: "ok",
                     data: response,
                 }))
             } catch (error) {
-                console.log(`Invalid client request:`, error)
+                console.log(`Invalid client request:`, error, '\n')
                 res.send(JSON.stringify({
                     status: "fail",
                     error: `${error}`,
@@ -79,17 +84,6 @@ class Server {
         })
     }
 
-    tryRestoreInstance(id) {
-        try {
-            let instance = new GameInstance()
-            instance.load(id)
-            console.log(`Successfully restored instance: ${id}`)
-            return instance
-        } catch (error) {
-            return null
-        }
-    }
-
     addInstance(id) {
         let instance = new GameInstance()
         this.instances.set(id, instance)
@@ -97,36 +91,94 @@ class Server {
     }
 
     setupGameProtocol() {
+        this.globalCommands = new Map()
+        this.globalCommands.set(Command.Hello, this.sayHello)
+        this.globalCommands.set(Command.GetProfiles, this.getProfiles)
+        this.globalCommands.set(Command.StartGame, this.startGame)
+        this.globalCommands.set(Command.LoadGame, this.loadGame)
+        this.globalCommands.set(Command.ExitGame, this.exitGame)
+
         this.commands = new Map()
-        this.commands.set(Command.StartGame, this.startGame)
         this.commands.set(Command.Solve, this.solve)
         this.commands.set(Command.GetSolutionVariants, this.getSolutionVariants)
         this.commands.set(Command.AddWord, this.addWord)
         this.commands.set(Command.AddUsedWord, this.addUsedWord)
         this.commands.set(Command.SetLetter, this.setLetter)
         this.commands.set(Command.GetNextStepInfo, this.getNextStepInfo)
+        this.commands.set(Command.AddToBlacklist, this.addToBlacklist)
+        this.commands.set(Command.AddToWhitelist, this.addToWhitelist)
     }
 
-    startGame(data, gameInstance) {
+    // * * * * * * * * * * * * * Global commands * * * * * * * * * * * * * * * * * 
+    sayHello(server, requestData) {
+        checkMissingData(requestData.data, 'version')
+
+        const clientVersion = requestData.data.version
+        if (clientVersion != serverVersion)
+            console.warn(`Client version ${clientVersion} differs from server version ${serverVersion}! This might be a problem.`)
+
+        return {
+            version: serverVersion,
+            gameExists: savedInstanceExists(requestData.id),
+        }
+    }
+
+    getProfiles(server, requestData) {
+        return {
+            profiles: getAvailableProfileNames()
+        }
+    }
+
+    startGame(server, requestData) {
+        let gameInstance = server.addInstance(requestData.id)
+
+        const data = requestData.data
+        checkMissingData(data, 'profile')
         checkMissingData(data, 'fieldSize')
         checkMissingData(data, 'initialWord')
 
         gameInstance.init(data)
-        //gameInstance.save(data.id) // todo: это перезагружает клиента!
 
         return {
             game: gameInstance.game.save(),
-            alphabet: gameInstance.game.alphabet.letters.join('')
+            alphabet: gameInstance.profile.alphabet.save()
         }
     }
 
-    solve(data, gameInstance) {
-        //console.log("SOLVE")
-        //console.log(gameInstance.game.field.toStringArray())
-        //console.log(gameInstance.finder.game.field.toStringArray())
-        gameInstance.finder.generateWords()
+    loadGame(server, requestData) {
+        if (!savedInstanceExists(requestData.id))
+            throw new Error(`Saved game ${requestData.id} doesn't exist!`)
+        
+        let gameInstance = server.addInstance(requestData.id)
+        gameInstance.load(requestData.id)
+        console.log(`Successfully restored instance: ${requestData.id}`)
+        
         return {
-            words: gameInstance.finder.getSolutionWords()
+            game: gameInstance.game.save(),
+            alphabet: gameInstance.profile.alphabet.save()
+        }
+    }
+
+    exitGame(server, requestData) {
+        let instance = server.instances.get(requestData.id)
+        if (!instance)
+            throw new Error(`Game ${requestData.id} is not running!`)
+
+        const needToSave = !!requestData.data.saveGame
+        if (needToSave)
+            instance.save(requestData.id)
+        
+        server.instances.delete(requestData.id)
+        return {}
+    }
+
+    // * * * * * * * * * * * * * Game commands * * * * * * * * * * * * * * * * * 
+    solve(data, gameInstance) {
+        gameInstance.finder.generateWords()
+
+        return {
+            words: gameInstance.finder.getSolutionWords(),
+            solutions: gameInstance.finder.solutions.map(s => s.save()),
         }
     }
 
@@ -149,7 +201,6 @@ class Server {
         const y = parseInt(data.cell.y)
         gameInstance.game.setLetter(x, y, data.letter)
         gameInstance.game.addUsedWord(data.word)
-        //gameInstance.save(data.id)
         
         return {
             game: gameInstance.game.save()
@@ -160,7 +211,6 @@ class Server {
         checkMissingData(data, 'word')
 
         gameInstance.game.addUsedWord(data.word)
-        //gameInstance.save(data.id)
         
         return {
             game: gameInstance.game.save()
@@ -187,7 +237,7 @@ class Server {
 
         const x = parseInt(data.cell.x)
         const y = parseInt(data.cell.y)
-        let futureGame = new Game(gameInstance.game.alphabet, gameInstance.game.field.size)
+        let futureGame = new Game(gameInstance.game.field.size)
         futureGame.load(gameInstance.game.save())
         futureGame.setLetter(x, y, data.letter)
         futureGame.addUsedWord(data.word)
@@ -197,9 +247,21 @@ class Server {
 
         let solutions = futureSeer.getSolutionWords()
         return {
-            longestWords: solutions.slice(0, 3),
+            longestWords: solutions.slice(0, 6),
             maxWordLength: solutions[0].length,
         }
+    }
+
+    addToBlacklist(data, gameInstance) {
+        checkMissingData(data, 'word')
+        gameInstance.profile.addToBlacklist(data.word)
+        return {}
+    }
+
+    addToWhitelist(data, gameInstance) {
+        checkMissingData(data, 'word')
+        gameInstance.profile.addToWhitelist(data.word)
+        return {}
     }
 }
 

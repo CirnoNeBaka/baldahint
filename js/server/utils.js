@@ -52,6 +52,20 @@ async function loadObject(filePath) {
     return obj
 }
 
+function saveObjectSync(obj, filePath) {
+    const file = fs.openSync(filePath, 'w')
+    fs.writeFileSync(file, JSON.stringify(obj, null, "\t"))
+    fs.close(file)
+}
+
+function loadObjectSync(filePath) {
+    const file = fs.openSync(filePath, 'r')
+    const data = fs.readFileSync(file).toString()
+    const obj = JSON.parse(data)
+    fs.closeSync(file)
+    return obj
+}
+
 export {
     saveStrings,
     saveStringsSync,
@@ -59,4 +73,6 @@ export {
     loadStringsSync,
     saveObject,
     loadObject,
+    saveObjectSync,
+    loadObjectSync,
 }
