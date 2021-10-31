@@ -1,5 +1,5 @@
 
-import * as Command from '../game/protocol.js'
+import * as Command from '../shared/protocol.js'
 
 export class FutureSeer {
     constructor(client) {

@@ -1,18 +1,19 @@
 "use strict"
 
+import _ from 'lodash-es'
+
 import * as fs from 'fs'
 import path from 'path'
 
 import * as utils from '../utils.js'
 import * as serverUtils from './utils.js'
 
-import { Profile } from '../dictionary/profile.js'
-import { Dictionary } from '../dictionary/dictionary.js'
-import { DictionaryIndex } from '../dictionary/index.js'
-import { Game } from '../game/game.js'
-import { Finder } from '../game/finder.js'
-import _ from 'lodash'
-import { GameLogicError } from '../game/error.js'
+import { Profile } from '../shared/dictionary/profile.js'
+import { Dictionary } from './dictionary/dictionary.js'
+import { DictionaryIndex } from './dictionary/index.js'
+import { Game } from '../shared/game/game.js'
+import { Finder } from './finder.js'
+import { GameLogicError } from '../shared/error.js'
 
 const profilesFolder = 'dictionaries/profiles'
 

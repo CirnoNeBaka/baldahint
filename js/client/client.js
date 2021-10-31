@@ -1,9 +1,9 @@
 "use strict"
 
-import * as alphabet from '../dictionary/alphabet.js'
-import * as Command from '../game/protocol.js'
-import { Game } from '../game/game.js'
-import { Solution } from '../game/finder.js'
+import * as alphabet from '../shared/dictionary/alphabet.js'
+import * as Command from '../shared/protocol.js'
+import { Game } from '../shared/game/game.js'
+import { Solution } from '../shared/game/solution.js'
 import { FutureSeer } from './seer.js'
 
 function clamp(min, x, max) {
@@ -17,7 +17,7 @@ const clientVersion = '1.0.0'
 const PageStart = 'start'
 const PageGame = 'game'
 
-class Client {
+export class Client {
     constructor() {
         this.id = clientID
         this.data = {}
@@ -400,33 +400,27 @@ class Client {
     }
 
     handleKeyboardEvent(event) {
-        console.log(`handleKeyboardEvent`, client.data.currentPage, event)
-        if (client.data.currentPage != PageGame)
+        console.log(`handleKeyboardEvent`, this.data.currentPage, event)
+        if (this.data.currentPage != PageGame)
             return
 
         event = event || window.event
         console.log(`${event.key} ${event.code} pressed`)
     
-        if (client.data.alphabet.containsLetter(event.key)) {
-            client.setFieldLetter(event.key)
+        if (this.data.alphabet.containsLetter(event.key)) {
+            this.setFieldLetter(event.key)
         } else if (event.code == 'Space' || event.code == 'Backspace' || event.code == 'Delete') {
-            client.setFieldLetter(alphabet.EmptySymbol)
+            this.setFieldLetter(alphabet.EmptySymbol)
         } else if (event.code == 'ArrowLeft') {
-            client.moveSelection(0, -1)
+            this.moveSelection(0, -1)
         } else if (event.code == 'ArrowRight') {
-            client.moveSelection(0, 1)
+            this.moveSelection(0, 1)
         } else if (event.code == 'ArrowUp') {
-            client.moveSelection(-1, 0)
+            this.moveSelection(-1, 0)
         } else if (event.code == 'ArrowDown') {
-            client.moveSelection(1, 0)
+            this.moveSelection(1, 0)
         } else if (event.code == 'Enter') {
-            client.solve()
+            this.solve()
         }
     }
 }
-
-let client = new Client()
-document.onkeydown = client.handleKeyboardEvent
-client.setupView()
-client.sayHello()
-client.getProfiles()

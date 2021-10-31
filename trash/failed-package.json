@@ -6,11 +6,16 @@
     "main": "js/server/run.js",
     "license": "WTFPL",
     "dependencies": {
+        "@babel/core": "^7.16.0",
+        "babelify": "^10.0.0",
         "browserify": "^17.0.0",
         "esmify": "^2.1.1",
         "express": "^4.17.1",
+        "gulp": "latest",
         "jquery": "^3.6.0",
         "lodash-es": "^4.17.21",
+        "vinyl-buffer": "^1.0.1",
+        "vinyl-source-stream": "^2.0.0",
         "vue": "^2.6.14"
     }
 }

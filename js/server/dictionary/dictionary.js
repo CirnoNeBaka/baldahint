@@ -4,11 +4,10 @@ import * as fsRegular from 'fs'
 import * as fs from 'fs/promises'
 import * as readline from 'readline'
 
-import * as utils from '../utils.js'
-import * as serverUtils from '../server/utils.js'
-import * as alphabet from './alphabet.js'
-import { Profile } from './profile.js'
-import { findSourceMap } from 'module'
+import * as utils from '../../utils.js'
+import * as serverUtils from '../utils.js'
+import * as alphabet from '../../shared/dictionary/alphabet.js'
+import { Profile } from '../../shared/dictionary/profile.js'
 
 async function forEachFileLine(inputPath, filterFunction, processorFunction) {
     const fileStream = fsRegular.createReadStream(inputPath)

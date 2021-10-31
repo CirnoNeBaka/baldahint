@@ -1,13 +1,13 @@
 
-import _ from 'lodash'
+import _ from 'lodash-es'
 import express from 'express'
 
 import * as serverUtils from './utils.js'
-import * as Command from '../game/protocol.js'
+import * as Command from '../shared/protocol.js'
 import { GameInstance, getAvailableProfileNames, savedInstanceExists } from './instance.js'
-import { Game } from '../game/game.js'
-import { Finder } from '../game/finder.js'
-import { GameLogicError, GameProtocolError } from '../game/error.js'
+import { Game } from '../shared/game/game.js'
+import { Finder } from './finder.js'
+import { GameLogicError, GameProtocolError } from '../shared/error.js'
 
 const serverVersion = '1.0.0'
 
@@ -33,7 +33,7 @@ function checkWord(word, profile) {
         throw new GameLogicError(`Invalid word: ${word}`)
 }
 
-class Server {
+export class Server {
     constructor() {
         this.instances = new Map()
         this.port = process.env.PORT || 3000
@@ -318,6 +318,3 @@ class Server {
         return {}
     }
 }
-
-let server = new Server()
-server.start()
