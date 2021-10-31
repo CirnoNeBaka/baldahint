@@ -136,6 +136,8 @@ class Finder {
         this.dictionary = dictionary
         this.dictionaryIndex = index
         this.solutions = []
+        this.currentStepNumber = 0
+        this.totalStepsCount = 0
     }
 
     maxWordLength() {
@@ -300,11 +302,19 @@ class Finder {
 
     generateWords() {
         this.solutions = []
+        this.currentStepNumber = 0
+
         const firstSteps = this.generatePossibleFirstSteps()
+
         const prefixChains = this.generatePrefixChains(firstSteps)
         log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
-        firstSteps.concat(prefixChains).forEach(step => {
+        
+        const steps = firstSteps.concat(prefixChains)
+        this.totalStepsCount = steps.length
+
+        steps.forEach(step => {
             log(`--- Step: ${step.currentWord()}`)
+            this.currentStepNumber++
             this.nextPostfix(step)
         })
     }
@@ -322,6 +332,10 @@ class Finder {
             new Set()
         )
         return Array.from(words.values()).sort(utils.longStringsFirstComparator)
+    }
+
+    getProgress() {
+        return this.totalStepsCount ? (this.currentStepNumber / this.totalStepsCount) : 0.0
     }
 }
 

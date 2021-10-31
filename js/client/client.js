@@ -24,6 +24,7 @@ class Client {
         this.view = null
         this.solutions = []
         this.seer = new FutureSeer(this)
+        this.progressChecker = null
         this.reset()
     }
 
@@ -47,6 +48,7 @@ class Client {
             hoveredVariantIndex: -1,
             selectedVariantIndex: -1,
             waitingForServerResponse: false,
+            solutionProgress: 0.0,
         }
     }
 
@@ -220,7 +222,7 @@ class Client {
                 },
                 getNextStepInfo: function(index) {
                     let variant = this.$data.solutionVariants[index]
-                    if (this.$data.seer.getInfo(variant))
+                    if (this.$data.client.seer.getInfo(variant))
                         return
                     
                     this.$data.client.sendRequest(this, Command.GetNextStepInfo,
@@ -313,6 +315,7 @@ class Client {
     }
 
     setFieldLetter(letter) {
+        this.resetVariantSelection()
         this.seer.stop()
         this.data.game.field.set(this.data.currentCell.x, this.data.currentCell.y, letter)
         this.updateFieldViewHack()
@@ -335,6 +338,7 @@ class Client {
             {},
             function (view, data) {
                 console.log(`Solved!`)
+                clearInterval(view.$data.client.updateChecker)
                 view.$data.solutionWords = data.words.slice(0, 30)
 
                 view.$data.client.solutions = data.solutions.map(solutionData => {
@@ -344,8 +348,13 @@ class Client {
                 })
 
                 view.$data.client.seer.start()
+                view.$data.client.updateChecker = setInterval(view.$data.client.updateProgress.bind(view.$data.client), 500)
             }
         )
+    }
+
+    updateProgress() {
+        // todo: progress updates require asynchronous solution finding
     }
 
     getSolutionVariants(word) {
@@ -400,7 +409,7 @@ class Client {
     
         if (client.data.alphabet.containsLetter(event.key)) {
             client.setFieldLetter(event.key)
-        } else if (event.code == 'Space') {
+        } else if (event.code == 'Space' || event.code == 'Backspace' || event.code == 'Delete') {
             client.setFieldLetter(alphabet.EmptySymbol)
         } else if (event.code == 'ArrowLeft') {
             client.moveSelection(0, -1)

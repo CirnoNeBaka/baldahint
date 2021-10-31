@@ -1,4 +1,5 @@
 
+import _ from 'lodash'
 import express from 'express'
 
 import * as serverUtils from './utils.js'
@@ -6,12 +7,30 @@ import * as Command from '../game/protocol.js'
 import { GameInstance, getAvailableProfileNames, savedInstanceExists } from './instance.js'
 import { Game } from '../game/game.js'
 import { Finder } from '../game/finder.js'
+import { GameLogicError, GameProtocolError } from '../game/error.js'
 
 const serverVersion = '1.0.0'
 
 function checkMissingData(data, property) {
     if (!data.hasOwnProperty(property))
-        throw new Error(`Missing required data: ${property}`)
+        throw new GameProtocolError(`Missing required data property: ${property}`)
+}
+
+function checkBounds(x, y, field) {
+    if (Number.isNaN(x) || Number.isNaN(y))
+        throw new GameProtocolError(`Invalid cooridnates type. Use integer numbers.`)
+    if (!field.isInside(x, y))
+        throw new GameLogicError(`Out of bounds field access: ${x}:${y}.`)
+}
+
+function checkLetter(letter, profile) {
+    if (!_.isString(letter) || !profile.alphabet.containsLetter(letter))
+        throw new GameLogicError(`Invalid letter: ${letter}`)
+}
+
+function checkWord(word, profile) {
+    if (!_.isString(word) || !profile.alphabet.containsWord(word))
+        throw new GameLogicError(`Invalid word: ${word}`)
 }
 
 class Server {
@@ -42,7 +61,7 @@ class Server {
             const data = req.query
             try {
                 if (!data)
-                    throw new Error('Request data missing')
+                    throw new GameProtocolError('Request data missing! Request should contain a "data" object.')
 
                 checkMissingData(data, 'id')
                 checkMissingData(data, 'command')
@@ -54,13 +73,13 @@ class Server {
                 } else {
                     let instance = this.instances.get(data.id)
                     if (!instance)
-                        throw new Error(`You need to start the game before sending command ${data.command}!`)
+                        throw new GameLogicError(`You need to start the game before sending command ${data.command}!`)
 
                     let command = this.commands.get(data.command)
                     if (command)
                         response = command(data.data, instance)
                     else
-                        throw new Error(`Unknown command ${data.command}!`)
+                        throw new GameProtocolError(`Unknown game protocol command ${data.command}!`)
                 }
 
                 console.log('response:', response)
@@ -70,10 +89,19 @@ class Server {
                     data: response,
                 }))
             } catch (error) {
-                console.log(`Invalid client request:`, error, '\n')
+                let message = ''
+                if (error instanceof GameProtocolError || error instanceof GameLogicError) {
+                    console.log(`Invalid client request:`, error, '\n')
+                    message = error.message
+                    res.statusCode = 200
+                } else {
+                    console.error('Internal error:', error)
+                    message = 'Internal server error'
+                    res.statusCode = 500
+                }
                 res.send(JSON.stringify({
                     status: "fail",
-                    error: `${error}`,
+                    error: message,
                 }))
             }
         })
@@ -100,6 +128,7 @@ class Server {
 
         this.commands = new Map()
         this.commands.set(Command.Solve, this.solve)
+        this.commands.set(Command.GetProgressStatus, this.getProgressStatus)
         this.commands.set(Command.GetSolutionVariants, this.getSolutionVariants)
         this.commands.set(Command.AddWord, this.addWord)
         this.commands.set(Command.AddUsedWord, this.addUsedWord)
@@ -147,7 +176,7 @@ class Server {
 
     loadGame(server, requestData) {
         if (!savedInstanceExists(requestData.id))
-            throw new Error(`Saved game ${requestData.id} doesn't exist!`)
+            throw new GameLogicError(`Saved game ${requestData.id} doesn't exist!`)
         
         let gameInstance = server.addInstance(requestData.id)
         gameInstance.load(requestData.id)
@@ -162,7 +191,7 @@ class Server {
     exitGame(server, requestData) {
         let instance = server.instances.get(requestData.id)
         if (!instance)
-            throw new Error(`Game ${requestData.id} is not running!`)
+            throw new GameLogicError(`Game ${requestData.id} is not running!`)
 
         const needToSave = !!requestData.data.saveGame
         if (needToSave)
@@ -182,8 +211,15 @@ class Server {
         }
     }
 
+    getProgressStatus(data, gameInstance) {
+        return {
+            progress: gameInstance.finder.getProgress()
+        }
+    }
+
     getSolutionVariants(data, gameInstance) {
         checkMissingData(data, 'word')
+        checkWord(data.word, gameInstance.profile)
 
         return {
             variants: gameInstance.finder.solutions
@@ -196,9 +232,14 @@ class Server {
         checkMissingData(data, 'cell')
         checkMissingData(data, 'letter')
         checkMissingData(data, 'word')
-
+    
+        checkLetter(data.letter, gameInstance.profile)
+        checkWord(data.word, gameInstance.profile)
+        
         const x = parseInt(data.cell.x)
         const y = parseInt(data.cell.y)
+        checkBounds(x, y, gameInstance.game.field)
+        
         gameInstance.game.setLetter(x, y, data.letter)
         gameInstance.game.addUsedWord(data.word)
         
@@ -209,6 +250,7 @@ class Server {
 
     addUsedWord(data, gameInstance) {
         checkMissingData(data, 'word')
+        checkWord(data.word, gameInstance.profile)
 
         gameInstance.game.addUsedWord(data.word)
         
@@ -220,9 +262,12 @@ class Server {
     setLetter(data, gameInstance) {
         checkMissingData(data, 'cell')
         checkMissingData(data, 'letter')
-        
+        checkLetter(data.letter, gameInstance.profile)
+
         const x = parseInt(data.cell.x)
         const y = parseInt(data.cell.y)
+        checkBounds(x, y, gameInstance.game.field)
+
         gameInstance.game.setLetter(x, y, data.letter)
         
         return {
@@ -235,8 +280,13 @@ class Server {
         checkMissingData(data, 'letter')
         checkMissingData(data, 'word')
 
+        checkLetter(data.letter, gameInstance.profile)
+        checkWord(data.word, gameInstance.profile)
+
         const x = parseInt(data.cell.x)
         const y = parseInt(data.cell.y)
+        checkBounds(x, y, gameInstance.game.field)
+
         let futureGame = new Game(gameInstance.game.field.size)
         futureGame.load(gameInstance.game.save())
         futureGame.setLetter(x, y, data.letter)
@@ -254,12 +304,16 @@ class Server {
 
     addToBlacklist(data, gameInstance) {
         checkMissingData(data, 'word')
+        checkWord(data.word, gameInstance.profile)
+
         gameInstance.profile.addToBlacklist(data.word)
         return {}
     }
 
     addToWhitelist(data, gameInstance) {
         checkMissingData(data, 'word')
+        checkWord(data.word, gameInstance.profile)
+
         gameInstance.profile.addToWhitelist(data.word)
         return {}
     }

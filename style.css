@@ -156,7 +156,7 @@ select:hover {
 #newGameButton,
 #loadGameButton {
     width: 400px;
-    height: 150px;
+    height: 100px;
     margin-top: 8px;
     font-size: 40px;
 }

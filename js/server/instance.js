@@ -11,6 +11,8 @@ import { Dictionary } from '../dictionary/dictionary.js'
 import { DictionaryIndex } from '../dictionary/index.js'
 import { Game } from '../game/game.js'
 import { Finder } from '../game/finder.js'
+import _ from 'lodash'
+import { GameLogicError } from '../game/error.js'
 
 const profilesFolder = 'dictionaries/profiles'
 
@@ -63,7 +65,12 @@ export class GameInstance {
         this.dictionaryIndex = new DictionaryIndex(this.dictionary.words)
 
         this.game = new Game(parseInt(utils.getRequiredProperty(data, 'fieldSize')))
-        this.game.setInitialWord(utils.getRequiredProperty(data, "initialWord"))
+
+        const word = utils.getRequiredProperty(data, "initialWord")
+        if (!_.isString(word) || !this.profile.alphabet.containsWord(word))
+            throw new GameLogicError(`Invalid initial word: ${word}`)
+
+        this.game.setInitialWord(word)
         this.finder = new Finder(this.game, this.dictionary, this.dictionaryIndex)
     }
 

@@ -2,6 +2,12 @@
 
 import * as utils from '../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
+import { GameLogicError } from './error.js'
+
+function validateFieldSize(size) {
+    if (!Number.isInteger(size) || size < 0 || size % 2 == 0)
+            throw new GameLogicError(`Invalid field size: ${size}`)
+}
 
 class Field {
     constructor() {
@@ -15,31 +21,23 @@ class Field {
     }
 
     reset(size, value = alphabet.EmptySymbol) {
-        if (typeof size != "number" || size <= 0 || size % 2 == 0)
-            throw new Error(`Invalid field size: ${size}x${size}`)
-
+        validateFieldSize(size)
         this.size = size
         this.cells = new Array(size * size).fill(value)
     }
 
     get(x, y) {
-        if (!this.isInside(x, y))
-            throw new Error(`Out of bounds get ${x}:${y}`)
-
         return this.cells[x + this.size * y]
     }
 
     set(x, y, value) {
-        if (!this.isInside(x, y))
-            throw new Error(`Out of bounds set ${x}:${y}`)
-
         this.cells[x + this.size * y] = value
     }
 
     isInside(x, y) {
-        return true &&
-            x >= 0 && x < this.size &&
-            y >= 0 && y < this.size
+        return true
+            && x >= 0 && x < this.size
+            && y >= 0 && y < this.size
     }
 
     adjacentCells(x, y) {
@@ -85,10 +83,18 @@ class Field {
     }
 
     fromStringArray(strings) {
+        if (!Array.isArray(strings) || strings.some(s => typeof s != 'string'))
+            throw GameLogicError(`fromStringArray: ${strings} should be an array of strings`)
+
+        validateFieldSize(strings.length)
         this.size = strings.length
         this.reset(this.size, alphabet.EmptySymbol)
+
         for (let i = 0; i < this.size; ++i) {
             const letters = utils.lettersOf(strings[i])
+            if (letters.length != this.size)
+                throw GameLogicError(`fromStringArray: Invalid string ${strings[i]}`)
+
             for (let j = 0; j < this.size; ++j) {
                 this.set(i, j, letters[j])
             }
@@ -100,9 +106,6 @@ class Field {
     }
 
     load(data) {
-        if (!Array.isArray(data) || !data.length)
-            throw new Error('Field: invalid load data:', data)
-
         this.fromStringArray(data)
     }
 

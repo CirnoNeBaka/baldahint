@@ -1,11 +1,17 @@
 "use strict"
 
+import _ from '../../node_modules/lodash-es/lodash.js'
+
 import * as utils from '../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
 import { Field } from './field.js'
+import { GameLogicError } from './error.js'
 
 class Game {
     constructor(fieldSize) {
+        if (!_.isInteger(fieldSize) || fieldSize < 0 || fieldSize % 2 == 0)
+            throw new GameLogicError(`Invalid game field size: ${fieldSize}. Should be a positive odd integer.`)
+
         this.field = new Field()
         this.field.reset(fieldSize)
         this.usedWords = new Set()
@@ -13,8 +19,8 @@ class Game {
     }
 
     setInitialWord(word) {
-        if (word.length != this.field.size)
-            throw new Error(`Initial word doesn't fit the field!`)
+        if (typeof word != 'string' || word.length != this.field.size)
+            throw new GameLogicError(`Initial word ${word} doesn't fit the field!`)
 
         const middleRow = Math.floor(this.field.size / 2)
         for (let i = 0; i < this.field.size; ++i)
