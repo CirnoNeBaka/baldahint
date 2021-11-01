@@ -6,11 +6,27 @@
     <div id="mainContainer" class="mainContainer">
         <h1>baldahint</h1>
         <div id="startGamePage" class="page" v-show="currentPage == 'start'">
-            <button id="newGameButton" v-on:click="startNewGame">Start new game</button>
-            <button id="loadGameButton" v-on:click="loadGame" v-bind:disabled="!savedGameExists">Load game</button>
-            <select id="profileCombobox" v-model="selectedProfile">
+            <button
+                id="newGameButton"
+                v-on:click="startNewGame"
+                v-bind:disabled="!isConnectedToServer"
+            >Start new game</button>
+            <button
+                id="loadGameButton"
+                v-on:click="loadGame"
+                v-bind:disabled="!isConnectedToServer || !savedGameExists"
+            >Load game</button>
+            <select
+                id="profileCombobox"
+                v-model="selectedProfile"
+                v-bind:disabled="!isConnectedToServer"
+            >
                 <option v-for="p in profiles" v-bind:name="p">{{ p }}</option>
             </select>
+            <p
+                id="errorMessage"
+                v-show="!isConnectedToServer"
+            >{{ errorMessage }}</p>
         </div>
         <div id="gamePage" class="page" v-show="currentPage == 'game'">
             <div id="gameField">
@@ -37,79 +53,41 @@
                 </div>
             </div>
             <div id="usedWords">
-                <p>Used words:</p>
-                <div id="usedWordsList" class="wordList">
-                    <div
-                        class="wordListItem"
-                        v-for="i in usedWordsList.length"
-                        @mouseover="hoveredIndexUsed = i"
-                        @mouseleave="hoveredIndexUsed = -1"
-                    >
-                        {{ usedWordsList[i-1].toUpperCase() }}
-                        <button
-                            class="wordListItemButton"
-                            v-show="hoveredIndexUsed == i"
-                            v-on:click="addToWhitelist(usedWordsList[i-1])"
-                        >➕</button>
-                        <button
-                            class="wordListItemButton"
-                            v-show="hoveredIndexUsed == i"
-                            v-on:click="addToBlacklist(usedWordsList[i-1])"
-                        >❌</button>
-                    </div>
-                </div>
-                <button
-                    v-on:click="addUsedWord"
-                    v-bind:disabled="waitingForServerResponse"
-                >Add word</button>
+                <word-list
+                    id="usedWordsList"
+                    title="Used words:"
+                    v-bind:items="usedWordsList"
+                    v-bind:header-buttons="usedWordsHeaderButtons"
+                    v-bind:item-buttons="usedWordsItemButtons"
+                    v-bind:item-formatter="wordItemFormatter"
+                >
+                </word-list>
             </div>
             <div id="solutionWords">
-                <p>Solutions:</p>
-                <div id="solutionWordsList" class="wordList">
-                    <div
-                        class="wordListItem"
-                        v-for="i in solutionWords.length"
-                        @mouseover="hoveredSolutionIndex = i"
-                        @mouseleave="hoveredSolutionIndex = -1"
-                        v-on:click="selectSolution(i-1)"
-                        v-bind:isSelected="selectedSolutionIndex == i-1"
-                    >
-                        {{ `${solutionWords[i-1].toUpperCase()} ${solutionWords[i-1].length}` }}
-                        <button
-                            class="wordListItemButton"
-                            v-show="hoveredSolutionIndex == i || selectedSolutionIndex == i-1"
-                            v-on:click="addToBlacklist(solutionWords[i-1])"
-                        >❌</button>
-                    </div>
-                </div>
+                <word-list
+                    id="solutionWordsList"
+                    ref="solutions"
+                    title="Solutions:"
+                    v-bind:items="solutionWords"
+                    v-bind:header-buttons="[]"
+                    v-bind:item-buttons="solutionWordsItemButtons"
+                    v-bind:item-formatter="wordItemFormatter"
+                    v-bind:item-selected-handler="solutionWordSelectionHandler"
+                >
+                </word-list>
             </div>
             <div id="solutionVariants">
-                <p>Variants:</p>
-                <div id="solutionVariantsList" class="wordList">
-                    <div
-                        class="wordListItem"
-                        v-for="i in solutionVariants.length"
-                        @mouseover="hoveredVariantIndex = i"
-                        @mouseleave="hoveredVariantIndex = -1"
-                        v-on:click="selectVariant(i-1)"
-                        v-bind:isSelected="selectedVariantIndex == i-1"
-                    >
-                        {{ getSolutionVariantDescription(i-1) }}
-                        <button
-                            class="wordListItemButton"
-                            v-show="hoveredVariantIndex == i || selectedVariantIndex == i-1"
-                            v-on:click="applyVariant(i-1)"
-                        >✔️</button>
-                        <button
-                            class="wordListItemButton"
-                            v-show="!hasNextStepInfo(i-1) && (hoveredVariantIndex == i || selectedVariantIndex == i-1)"
-                            v-on:click="getNextStepInfo(i-1)"
-                        >❔</button>
-                        <span id="nextStepHint" v-bind:title="getLongNextStepDescription(i-1)">
-                            {{ getShortNextStepDescription(i-1) }}
-                        </span>
-                    </div>
-                </div>
+                <word-list
+                    id="solutionVariantsList"
+                    ref="variants"
+                    title="Variants:"
+                    v-bind:items="solutionVariants"
+                    v-bind:header-buttons="[]"
+                    v-bind:item-buttons="solutionVariantsItemButtons"
+                    v-bind:item-formatter="solutionItemFormatter"
+                    v-bind:item-selected-handler="variantSelectionHandler"
+                >
+                </word-list>
             </div>
             <div id="footer">
                 <p>{{ `Profile: ${selectedProfile}` }}</p>
@@ -127,6 +105,6 @@
     <script src="node_modules/lodash-es/lodash.default.js" type="module"></script>
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
     <script src="node_modules/vue/dist/vue.js"></script>
-    <!-- <script src="js/client/run.js" type="module"></script> -->
-    <script src="bundle/client.js" type="module"></script>
+    <script src="js/client/run.js" type="module"></script>
+    <!-- <script src="bundle/client.js" type="module"></script> -->
 </body>

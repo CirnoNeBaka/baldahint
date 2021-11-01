@@ -26,3 +26,12 @@ function defaultTask(cb) {
 }
   
 exports.default = defaultTask
+
+// const data = browserify(['js/client/run.js'])
+//     .transform(esmify)
+//     .bundle()
+//     //.read()
+//     //.toString()
+
+// console.log(data)
+// console.log(data.length)

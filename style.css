@@ -30,6 +30,7 @@ button:disabled {
 
 select {
     min-height: 36px;
+    border: 2px solid #aaaaaa;
     border-radius: 8px;
     background-color: transparent;
     color: white;
@@ -37,6 +38,12 @@ select {
 
 select:hover {
     background-color: #444444;
+}
+
+select:disabled {
+    background-color: transparent;
+    border: 2px solid #444444;
+    color: #444444;
 }
 
 .page {
@@ -56,9 +63,11 @@ select:hover {
 }
 
 .fieldCell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     height: 50px;
     width: 50px;
-    text-align: center;
     border: 1px solid #aaaaaa;
     background-color: transparent;
     font-family: 'Arial';
@@ -79,13 +88,24 @@ select:hover {
     color: red;
 }
 
-.wordList
-{
+.wordList {
     height: 275px;
     width: 275px;
     overflow: auto;
     border: 2px solid #aaaaaa;
     border-radius: 8px;
+}
+
+.wordListHeader {
+    width: 275px;
+    text-align: left;
+}
+
+.wordListHeaderButton {
+    margin-bottom: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    float: right;
 }
 
 .wordListItem {
@@ -95,6 +115,8 @@ select:hover {
     padding-right: 8px;
     font-size: 20px;
     background-color: transparent;
+    vertical-align: middle;
+    line-height: 30px;
 }
 
 .wordListItem:hover {
@@ -144,6 +166,10 @@ select:hover {
     grid-row-end: 3;
     grid-column-start: 2;
     grid-column-end: 3;
+}
+
+#solutionVariantsList .wordListItem {
+    font-size: 14px;
 }
 
 #footer {
@@ -199,6 +225,10 @@ select:hover {
 #solveButton {
     margin-top: 8px;
     width: 275px;
+}
+
+#errorMessage {
+    color: red;
 }
 
 #license {

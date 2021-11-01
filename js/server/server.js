@@ -65,6 +65,7 @@ export class Server {
 
                 checkMissingData(data, 'id')
                 checkMissingData(data, 'command')
+                //checkMissingData(data, 'data')
 
                 let response = {}
                 let globalCommand = this.globalCommands.get(data.command)

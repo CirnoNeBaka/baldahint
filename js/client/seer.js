@@ -9,7 +9,7 @@ export class FutureSeer {
         this.variantsCache = new Map()
         this.nextStepInfoCache = new Map()
         this.interrupted = false
-        this.$data = {} // hack for client.sendRequest() compatibility
+        this.data = {} // hack for client.sendRequest() compatibility
     }
 
     start() {
@@ -59,6 +59,7 @@ export class FutureSeer {
             function(seer, data) {
                 console.log(`Seer cached info for variant ${variant.hash()}`)
                 seer.cacheInfo(variant, data)
+                variant.nextStepInfo = data
                 seer.variantQueue.shift()
                 if (!seer.variantQueue.length)
                     seer.solutionQueue.shift()

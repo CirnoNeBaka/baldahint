@@ -1,6 +1,6 @@
 "use strict"
 
-import _ from 'lodash-es'
+//import _ from 'lodash-es'
 
 import * as utils from '../../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
@@ -9,7 +9,7 @@ import { GameLogicError } from '../error.js'
 
 class Game {
     constructor(fieldSize) {
-        if (!_.isInteger(fieldSize) || fieldSize < 0 || fieldSize % 2 == 0)
+        if (!Number.isInteger(fieldSize) || fieldSize < 0 || fieldSize % 2 == 0)
             throw new GameLogicError(`Invalid game field size: ${fieldSize}. Should be a positive odd integer.`)
 
         this.field = new Field()

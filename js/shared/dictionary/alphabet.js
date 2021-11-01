@@ -47,9 +47,6 @@ class Alphabet {
     }
 }
 
-// const Russian = new Alphabet(russianLetters)
-// const English = new Alphabet(englishLetters)
-
 export {
     EmptySymbol,
     Alphabet,
