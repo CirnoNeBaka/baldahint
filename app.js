@@ -5,14 +5,27 @@ import * as jsUtil from 'util'
 
 import * as utils from './js/utils.js'
 import * as serverUtils from './js/server/utils.js'
-import * as alphabet from './js/dictionary/alphabet.js'
-import { Profile } from './js/dictionary/profile.js'
-import { Dictionary } from './js/dictionary/dictionary.js'
-import { DictionaryIndex } from './js/dictionary/index.js'
-import { Game } from './js/game/game.js'
+import * as alphabet from './js/shared/dictionary/alphabet.js'
+import { Profile } from './js/shared/dictionary/profile.js'
+import { Dictionary } from './js/server/dictionary/dictionary.js'
+import { DictionaryIndex } from './js/server/dictionary/index.js'
+import { Game } from './js/shared/game/game.js'
 
-import { Finder, Solution } from './js/game/finder.js'
+import { Finder } from './js/server/finder.js'
 import { getAvailableProfileNames, loadProfile } from './js/server/instance.js'
+
+function foo() {
+    console.log('Foo')
+}
+
+async function bar() {
+    console.log('Bar')
+}
+
+const functions = [ foo, bar ]
+
+functions.forEach(async f => { await f() })
+process.exit(0)
 
 const profiles = getAvailableProfileNames()
 console.log('Available profiles:', profiles)
@@ -66,7 +79,7 @@ async function startGame() {
 
     let finder = new Finder(game, dictionary, dictionaryIndex)
     console.time("generate-solutions")
-    finder.generateWords()
+    await finder.generateWords()
     console.timeEnd("generate-solutions")
 
     const solutions = finder.getSolutions()

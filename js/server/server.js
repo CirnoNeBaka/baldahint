@@ -78,9 +78,24 @@ export class Server {
 
                     let command = this.commands.get(data.command)
                     if (command)
+                    {
                         response = command(data.data, instance)
+                        if (response instanceof Promise) {
+                            console.log('Async command! Will be executed later.')
+                            response.then(function(response) {
+                                console.log('async response:', response)
+                                res.send(JSON.stringify({
+                                    status: "ok",
+                                    data: response,
+                                }))
+                            })
+                            return
+                        }
+                    }
                     else
+                    {
                         throw new GameProtocolError(`Unknown game protocol command ${data.command}!`)
+                    }
                 }
 
                 console.log('response:', response)
@@ -203,8 +218,8 @@ export class Server {
     }
 
     // * * * * * * * * * * * * * Game commands * * * * * * * * * * * * * * * * * 
-    solve(data, gameInstance) {
-        gameInstance.finder.generateWords()
+    async solve(data, gameInstance) {
+        await gameInstance.finder.generateWords()
 
         return {
             words: gameInstance.finder.getSolutionWords(),
@@ -276,7 +291,7 @@ export class Server {
         }
     }
 
-    getNextStepInfo(data, gameInstance) {
+    async getNextStepInfo(data, gameInstance) {
         checkMissingData(data, 'cell')
         checkMissingData(data, 'letter')
         checkMissingData(data, 'word')
@@ -294,7 +309,7 @@ export class Server {
         futureGame.addUsedWord(data.word)
 
         let futureSeer = new Finder(futureGame, gameInstance.dictionary, gameInstance.dictionaryIndex)
-        futureSeer.generateWords()
+        await futureSeer.generateWords()
 
         let solutions = futureSeer.getSolutionWords()
         return {

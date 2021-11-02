@@ -52,7 +52,7 @@ export class Client {
             ],
             usedWordsItemButtons: [
                 { title: '❌', action: this.addToBlacklist.bind(this) },
-                { title: '➖', action: this.removeUsedWord.bind(this) },
+                //{ title: '➖', action: this.removeUsedWord.bind(this) },
                 { title: '➕', action: this.addToWhitelist.bind(this) },
             ],
             solutionWordsItemButtons: [
@@ -170,10 +170,10 @@ export class Client {
                 console.log(`Game loaded!`)
                 client.data.alphabet.load(data.alphabet)
                 client.data.game.load(data.game)
-                client.data.usedWordsList = view.$data.game.usedWordsList()
+                client.data.usedWordsList = client.data.game.usedWordsList()
                 client.resetSolutions()
                 client.seer.stop()
-                clientw.data.currentPage = PageGame
+                client.data.currentPage = PageGame
             }
         )
     }
@@ -251,11 +251,14 @@ export class Client {
 
     solve() {
         this.seer.stop()
+        this.data.solutionProgress = 0.0
+        this.updateChecker = setInterval(this.updateProgress.bind(this), 500)
         this.sendRequest(this, Command.Solve,
             {},
             function (client, data) {
                 console.log(`Solved!`)
                 clearInterval(client.updateChecker)
+                client.data.solutionProgress = 1.0
                 client.data.solutionWords = data.words.slice(0, 30)
 
                 client.solutions = data.solutions.map(solutionData => {
@@ -265,7 +268,6 @@ export class Client {
                 })
 
                 client.seer.start()
-                client.updateChecker = setInterval(client.updateProgress.bind(client), 500)
             }
         )
     }
@@ -353,7 +355,10 @@ export class Client {
     }
 
     updateProgress() {
-        // todo: progress updates require asynchronous solution finding
+        this.sendRequest(this, Command.GetProgressStatus, {}, function(client, data){
+            client.view.$data.solutionProgress = parseFloat(data.progress)
+            console.log('Update progress...', client.data.solutionProgress.toFixed(2))
+        })
     }
 
     getSolutionVariants(word) {
@@ -424,7 +429,7 @@ export class Client {
     }
 
     handleKeyboardEvent(event) {
-        console.log(`handleKeyboardEvent`, this.data.currentPage, event)
+        //console.log(`handleKeyboardEvent`, this.data.currentPage, event)
         if (this.data.currentPage != PageGame)
             return
 

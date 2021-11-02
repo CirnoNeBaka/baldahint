@@ -90,7 +90,7 @@
                 </word-list>
             </div>
             <div id="footer">
-                <p>{{ `Profile: ${selectedProfile}` }}</p>
+                <p>{{ `Profile: ${selectedProfile} Progress: ${solutionProgress.toFixed(0) * 100}%` }}</p>
                 <button
                     id="exitGameButton"
                     v-on:click="exitGame"

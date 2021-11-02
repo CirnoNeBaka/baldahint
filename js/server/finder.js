@@ -249,13 +249,25 @@ class Finder {
         log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
         
         const steps = firstSteps.concat(prefixChains)
+        
+        this.currentStepNumber = 0
         this.totalStepsCount = steps.length
 
-        steps.forEach(step => {
-            log(`--- Step: ${step.currentWord()}`)
-            this.currentStepNumber++
-            this.nextPostfix(step)
+        return new Promise((resolve, reject) => {
+            this.processOneStep(steps, resolve)
         })
+    }
+
+    processOneStep(stepsQueue, promiseResolution) {
+        if (!stepsQueue.length) {
+            console.log(`Finder has finished generating solutions.`)
+            promiseResolution(this.solutions)
+            return
+        }
+        const step = stepsQueue.pop()
+        this.nextPostfix(step)
+            this.currentStepNumber++
+        setImmediate(this.processOneStep.bind(this, stepsQueue, promiseResolution))
     }
 
     getSolutions() {
