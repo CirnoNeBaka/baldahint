@@ -40,6 +40,19 @@ export class Server {
         this.app = express()
     }
 
+    allowGetFile(pathRegex, overridePath) {
+        this.app.get(pathRegex, (req, res) => {
+           // console.log('Got a file request:', req.path, req.header('User-Agent'))
+            res.sendFile(
+                overridePath ? overridePath : req.path,
+                {
+                    root: ".",
+                },
+                (error) => { if (error) console.log('error', error) }
+            )
+        })
+    }
+
     start() {
         this.app.use(function(req, res, next) {
             if (req.headers.origin) {
@@ -54,9 +67,16 @@ export class Server {
 
         this.setupGameProtocol()
 
-        this.app.get('/', (req, res) => {
+        this.allowGetFile('/', 'index.html')
+        this.allowGetFile('/style.css', 'style.css')
+        this.allowGetFile('/favicon.ico', 'favicon.ico')
+        this.allowGetFile('/node_modules/*')
+        this.allowGetFile('/js/client/*')
+        this.allowGetFile('/js/shared/*')
+
+        this.app.get('/game', (req, res) => {
             console.log('==================================================')
-            console.log(`Got a request!`, req.path, req.method, req.query)
+            console.log(`Got a game request!`, req.path, req.method, req.query)
             console.log(`${this.instances.size} instances running:`, Array.from(this.instances.keys()))
             const data = req.query
             try {
@@ -314,7 +334,7 @@ export class Server {
         let solutions = futureSeer.getSolutionWords()
         return {
             longestWords: solutions.slice(0, 6),
-            maxWordLength: solutions[0].length,
+            maxWordLength: solutions.length ? solutions[0].length : 0,
         }
     }
 

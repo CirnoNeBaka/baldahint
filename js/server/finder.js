@@ -1,6 +1,6 @@
 "use strict"
 
-import * as utils from '../utils.js'
+import * as utils from '../shared/utils.js'
 import * as alphabet from '../shared/dictionary/alphabet.js'
 import { Field } from '../shared/game/field.js'
 import { Solution } from '../shared/game/solution.js'

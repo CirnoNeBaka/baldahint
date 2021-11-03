@@ -5,7 +5,7 @@ import _ from 'lodash-es'
 import * as fs from 'fs'
 import path from 'path'
 
-import * as utils from '../utils.js'
+import * as utils from '../shared/utils.js'
 import * as serverUtils from './utils.js'
 
 import { Profile } from '../shared/dictionary/profile.js'

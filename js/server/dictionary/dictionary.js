@@ -4,7 +4,7 @@ import * as fsRegular from 'fs'
 import * as fs from 'fs/promises'
 import * as readline from 'readline'
 
-import * as utils from '../../utils.js'
+import * as utils from '../../shared/utils.js'
 import * as serverUtils from '../utils.js'
 import * as alphabet from '../../shared/dictionary/alphabet.js'
 import { Profile } from '../../shared/dictionary/profile.js'

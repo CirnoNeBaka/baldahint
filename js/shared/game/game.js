@@ -2,7 +2,7 @@
 
 //import _ from 'lodash-es'
 
-import * as utils from '../../utils.js'
+import * as utils from '../utils.js'
 import * as alphabet from '../dictionary/alphabet.js'
 import { Field } from './field.js'
 import { GameLogicError } from '../error.js'

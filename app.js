@@ -3,7 +3,7 @@
 import * as readline from 'readline'
 import * as jsUtil from 'util'
 
-import * as utils from './js/utils.js'
+import * as utils from './js/shared/utils.js'
 import * as serverUtils from './js/server/utils.js'
 import * as alphabet from './js/shared/dictionary/alphabet.js'
 import { Profile } from './js/shared/dictionary/profile.js'

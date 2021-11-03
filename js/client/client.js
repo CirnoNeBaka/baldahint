@@ -11,7 +11,7 @@ function clamp(min, x, max) {
     return Math.min(max, Math.max(x, min))
 }
 
-const serverUrl = 'http://localhost:3000'
+const serverUrl = `http://${window.location.host}/game`
 const clientID = 'test'
 const clientVersion = '1.0.0'
 
