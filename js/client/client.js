@@ -111,7 +111,7 @@ export class Client {
                     this.$data.client.exitGame()
                 },
                 solve: function() {
-                    this.$data.solutionWords = [ 'Waiting...' ]
+                    this.$data.solutionWords = []
                     this.$data.client.solve()
                     this.$data.client.resetSolutionSelection()
                 },
@@ -394,8 +394,9 @@ export class Client {
     }
 
     sendRequest(client, command, data, callback) {
+        let isLongCommand = (command => command == Command.Solve)
         console.log(`send request: ${command}`, data)
-        if (command != Command.GetNextStepInfo)
+        if (isLongCommand(command))
             client.data.waitingForServerResponse = true
 
         $.get(
@@ -406,7 +407,8 @@ export class Client {
                 data: data,
             },
             function(rawData) {
-                client.data.waitingForServerResponse = false
+                if (isLongCommand(command))
+                    client.data.waitingForServerResponse = false
                 client.data.isConnectedToServer = true
                 const data = JSON.parse(rawData)
                 if (!data) {

@@ -112,21 +112,21 @@ class Finder {
         return steps
     }
 
-    // Генерирует все возможные шаги, в которых новая буква стоит в середине слова.
-    generatePrefixChains(firstSteps) {
+    // Генерирует все возможные шаги, в которых новая буква шага step стоит в середине слова.
+    generatePrefixChains(step) {
         let chains = []
         const maxLength = this.maxWordLength()
-        firstSteps.forEach(step => {
-            for (let newLetterIndex = 1; newLetterIndex < maxLength; ++newLetterIndex)
-            {
-                const originalCell = step.currentCell
-                let intermediateStep = new Step()
-                intermediateStep.cloneFrom(step)
-                intermediateStep.stepIndex = newLetterIndex
-                log(`Generating words that have ${step.currentLetters[0]} at index ${newLetterIndex}...`)
-                this.nextPrefix(intermediateStep, chains, originalCell, newLetterIndex)
-            }
-        })
+
+        for (let newLetterIndex = 1; newLetterIndex < maxLength; ++newLetterIndex)
+        {
+            const originalCell = step.currentCell
+            let intermediateStep = new Step()
+            intermediateStep.cloneFrom(step)
+            intermediateStep.stepIndex = newLetterIndex
+            log(`Generating words that have ${step.currentLetters[0]} at index ${newLetterIndex}...`)
+            this.nextPrefix(intermediateStep, chains, originalCell, newLetterIndex)
+        }
+
         return chains
     }
 
@@ -241,20 +241,13 @@ class Finder {
 
     generateWords() {
         this.solutions = []
-        this.currentStepNumber = 0
 
-        const firstSteps = this.generatePossibleFirstSteps()
-
-        const prefixChains = this.generatePrefixChains(firstSteps)
-        log(`first steps: ${firstSteps.length}, prefix chains: ${prefixChains.length}`)
-        
-        const steps = firstSteps.concat(prefixChains)
-        
+        const firstSteps = this.generatePossibleFirstSteps()    
         this.currentStepNumber = 0
-        this.totalStepsCount = steps.length
+        this.totalStepsCount = firstSteps.length
 
         return new Promise((resolve, reject) => {
-            this.processOneStep(steps, resolve)
+            this.processOneStep(firstSteps, resolve)
         })
     }
 
@@ -264,9 +257,15 @@ class Finder {
             promiseResolution(this.solutions)
             return
         }
+
         const step = stepsQueue.pop()
-        this.nextPostfix(step)
-            this.currentStepNumber++
+        let prefixChains = this.generatePrefixChains(step)
+        prefixChains.push(step)
+
+        while (prefixChains.length)
+            this.nextPostfix(prefixChains.pop())
+
+        this.currentStepNumber++
         setImmediate(this.processOneStep.bind(this, stepsQueue, promiseResolution))
     }
 

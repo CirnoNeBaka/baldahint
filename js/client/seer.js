@@ -33,18 +33,6 @@ export class FutureSeer {
         const word = this.solutionQueue[0]
         this.variantQueue = this.client.getSolutionVariants(word)
         this.nextStep()
-
-        // this.client.sendRequest(this, Command.GetSolutionVariants,
-        //     {
-        //         word: word,
-        //     },
-        //     function (seer, data) {
-        //         console.log(`Seer cached ${data.variants.length} variants for word ${word}`)
-        //         seer.variantsCache.set(word, data.variants)
-        //         seer.variantQueue = data.variants
-        //         seer.nextStep()
-        //     }
-        // )
     }
 
     getNextVariantInfo() {

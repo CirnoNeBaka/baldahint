@@ -37,8 +37,9 @@ export class SolutionItemFormatter {
             return ''
 
         const maxWordLength = item.nextStepInfo.maxWordLength
+        const indicator = (item.words[0].length < maxWordLength ? '‼️' : (item.words[0].length > maxWordLength ? '💲' : ''))
         const longestWordsCount = item.nextStepInfo.longestWords.filter(word => word.length == maxWordLength).length
-        return `Next: ${maxWordLength} (${longestWordsCount})`
+        return `${maxWordLength} (${longestWordsCount}) ${indicator}`
     }
 
     nextStepLongDescription(item) {

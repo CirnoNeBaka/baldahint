@@ -14,19 +14,6 @@ import { Game } from './js/shared/game/game.js'
 import { Finder } from './js/server/finder.js'
 import { getAvailableProfileNames, loadProfile } from './js/server/instance.js'
 
-function foo() {
-    console.log('Foo')
-}
-
-async function bar() {
-    console.log('Bar')
-}
-
-const functions = [ foo, bar ]
-
-functions.forEach(async f => { await f() })
-process.exit(0)
-
 const profiles = getAvailableProfileNames()
 console.log('Available profiles:', profiles)
 

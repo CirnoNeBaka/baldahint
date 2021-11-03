@@ -49,7 +49,15 @@
                         id="solveButton"
                         v-on:click="solve"
                         v-bind:disabled="waitingForServerResponse"
-                    >Solve</button>
+                    >{{ !waitingForServerResponse ? 'Solve' : '' }}
+                        <progress
+                            v-show="waitingForServerResponse"
+                            v-bind:value="solutionProgress"
+                            max="1.0"
+                        >
+                            `${(solutionProgress * 100.0).toFixed(0)}%`
+                        </progress>
+                    </button>
                 </div>
             </div>
             <div id="usedWords">
@@ -90,7 +98,7 @@
                 </word-list>
             </div>
             <div id="footer">
-                <p>{{ `Profile: ${selectedProfile} Progress: ${solutionProgress.toFixed(0) * 100}%` }}</p>
+                <p>{{ `Profile: ${selectedProfile}` }}</p>
                 <button
                     id="exitGameButton"
                     v-on:click="exitGame"
