@@ -2,14 +2,13 @@
 import _ from 'lodash-es'
 import express from 'express'
 
+import { version as serverVersion } from '../shared/version.js'
 import * as serverUtils from './utils.js'
 import * as Command from '../shared/protocol.js'
 import { GameInstance, getAvailableProfileNames, savedInstanceExists } from './instance.js'
 import { Game } from '../shared/game/game.js'
 import { Finder } from './finder.js'
 import { GameLogicError, GameProtocolError } from '../shared/error.js'
-
-const serverVersion = '1.0.0'
 
 function checkMissingData(data, property) {
     if (!data.hasOwnProperty(property))
@@ -58,7 +57,7 @@ export class Server {
             if (req.headers.origin) {
                 res.header('Access-Control-Allow-Origin', '*')
                 res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Authorization')
-                res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE')
+                res.header('Access-Control-Allow-Methods', 'GET') // PUT,PATCH,POST,DELETE
                 if (req.method === 'OPTIONS')
                     return res.send(200)
             }
@@ -69,7 +68,8 @@ export class Server {
 
         this.allowGetFile('/', 'index.html')
         this.allowGetFile('/style.css', 'style.css')
-        this.allowGetFile('/favicon.ico', 'favicon.ico')
+        this.allowGetFile('/favicon.ico', '/images/favicon.ico')
+        this.allowGetFile('/images/*')
         this.allowGetFile('/node_modules/*')
         this.allowGetFile('/js/client/*')
         this.allowGetFile('/js/shared/*')

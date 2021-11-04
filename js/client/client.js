@@ -2,6 +2,7 @@
 
 import * as alphabet from '../shared/dictionary/alphabet.js'
 import * as Command from '../shared/protocol.js'
+import { version as clientVersion } from '../shared/version.js'
 import { Game } from '../shared/game/game.js'
 import { Solution } from '../shared/game/solution.js'
 import { FutureSeer } from './seer.js'
@@ -13,7 +14,6 @@ function clamp(min, x, max) {
 
 const serverUrl = `http://${window.location.host}/game`
 const clientID = 'test'
-const clientVersion = '1.0.0'
 
 const PageStart = 'start'
 const PageGame = 'game'
